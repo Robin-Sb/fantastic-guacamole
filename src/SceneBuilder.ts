@@ -9,6 +9,7 @@ namespace Malefiz {
       }
       viewport.getBranch().addChild(fieldRoot);
       SceneBuilder.insertRemainingEdges();
+      SceneBuilder.addStandardTokens();
     }
 
     private static addNodes(): void {
@@ -204,7 +205,28 @@ namespace Malefiz {
         } 
       }
     }
-  
+
+    private static addStandardTokens(): void {
+      SceneBuilder.addBarrier(-8, -3);
+      SceneBuilder.addBarrier(-4, -3);
+      SceneBuilder.addBarrier( 0, -3);
+      SceneBuilder.addBarrier( 4, -3);
+      SceneBuilder.addBarrier( 8, -3);
+      SceneBuilder.addBarrier(-2,  1);
+      SceneBuilder.addBarrier( 2,  1);
+      SceneBuilder.addBarrier( 0,  3);
+      SceneBuilder.addBarrier( 0,  4);
+      SceneBuilder.addBarrier( 0,  5);
+      SceneBuilder.addBarrier( 0,  7);
+
+      graph.nodes.get("0|8").token = new Token("Finish", ƒ.Color.CSS("black"), TYPE.WIN, "0|8", normNodePosition(new ƒ.Vector2(0, 8)));
+    }
+    
+    private static addBarrier(_x: number, _y: number): void {
+      let barrier: Token = new Token("B" + _x + "|" + _y, ƒ.Color.CSS("white"), TYPE.BARRIER, _x + "|" + _y, normNodePosition(new ƒ.Vector2(_x, _y)));
+      barrier.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder")));
+      graph.nodes.get(_x + "|" + _y).token = barrier;
+    }
   
   }
 

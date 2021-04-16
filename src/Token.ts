@@ -17,11 +17,5 @@ namespace Malefiz {
       this.mtxLocal.scale(new ƒ.Vector3(this.diameter, this.diameter, 0.3));
       viewport.getBranch().addChild(this);
     }
-  }
-
-  export enum TYPE {
-    PLAYER,
-    BARRIER,
-    WIN
-  }
+  } 
 }
