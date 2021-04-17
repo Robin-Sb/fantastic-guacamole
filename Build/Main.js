@@ -359,9 +359,6 @@ var Malefiz;
         }
         removeTokens() {
             Malefiz.viewport.getBranch().removeChild(this.#tokens);
-            // for (let token of this.#tokens.getChildren()) {
-            //   viewport.getBranch().removeChild(token);
-            // }
         }
         getColor() {
             return this.colorToCSSMap.get(this.color);
@@ -384,8 +381,6 @@ var Malefiz;
 var Malefiz;
 (function (Malefiz) {
     class PlayerController {
-        //private adjacentFields: Field[];
-        //private possibleMoves: DisplayedField[];
         constructor(_players) {
             this.playerTypes = new Set([Malefiz.TYPE.PLAYER_RED, Malefiz.TYPE.PLAYER_GREEN, Malefiz.TYPE.PLAYER_YELLOW, Malefiz.TYPE.PLAYER_BLUE]);
             this.currentTurn = 0;
@@ -454,14 +449,6 @@ var Malefiz;
             };
             this.players = _players;
             this.dice = new Malefiz.Dice();
-            // let diceMesh: ƒ.MeshDiceCube = new ƒ.MeshDiceCube();
-            // let texture: ƒ.CoatTextured = generateTextureFromId("#dice_text");
-            // let dice: ƒ.Node = new ƒAid.Node("Dice", ƒ.Matrix4x4.TRANSLATION(new ƒ.Vector3(5, 0, 0)), new ƒ.Material("DiceMat", ƒ.ShaderTexture, texture), diceMesh);
-            // dice.mtxLocal.rotateY(180);
-            // dice = new Dice();
-            // dice.mtxLocal.translateX(5);
-            // dice.mtxLocal.rotateX(90);
-            // viewport.getBranch().addChild(dice);
             Malefiz.viewport.addEventListener("\u0192pointerdown" /* DOWN */, this.executeTurn);
             Malefiz.viewport.activatePointerEvent("\u0192pointerdown" /* DOWN */, true);
             Malefiz.viewport.addEventListener("\u0192pointermove" /* MOVE */, this.moveBarrier);

@@ -227,7 +227,6 @@ namespace Malefiz {
       barrier.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder", 15)));
       graph.nodes.get(_x + "|" + _y).token = barrier;
     }
-  
   }
 
   function normNodePosition(_position: ƒ.Vector2): ƒ.Vector2 {

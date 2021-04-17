@@ -1,6 +1,5 @@
 namespace Malefiz {
   export class Token extends ƒ.Node {
-    // maybe move this
     public field: string;
     public color: ƒ.Color;
     public type: TYPE;

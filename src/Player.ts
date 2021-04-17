@@ -23,9 +23,6 @@ namespace Malefiz {
 
     public removeTokens(): void {
       viewport.getBranch().removeChild(this.#tokens);
-      // for (let token of this.#tokens.getChildren()) {
-      //   viewport.getBranch().removeChild(token);
-      // }
     }
 
     public getColor(): ƒ.Color {

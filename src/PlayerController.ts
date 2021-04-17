@@ -4,25 +4,14 @@ namespace Malefiz {
     private players: Player[];
     private currentTurn: number = 0;
     private currentStage: STAGE = STAGE.ROLL;
-    //private stages: STAGE[] = [STAGE.ROLL, STAGE.PICK_TOKEN, STAGE.MOVE_TOKEN];
     private diceValue: number;
     private pickedToken: Token;
     private moveableBarrier: Token;
     private dice: Dice;
-    //private adjacentFields: Field[];
-    //private possibleMoves: DisplayedField[];
 
     constructor(_players: Player[]) {
       this.players = _players;
       this.dice = new Dice();
-      // let diceMesh: ƒ.MeshDiceCube = new ƒ.MeshDiceCube();
-      // let texture: ƒ.CoatTextured = generateTextureFromId("#dice_text");
-      // let dice: ƒ.Node = new ƒAid.Node("Dice", ƒ.Matrix4x4.TRANSLATION(new ƒ.Vector3(5, 0, 0)), new ƒ.Material("DiceMat", ƒ.ShaderTexture, texture), diceMesh);
-      // dice.mtxLocal.rotateY(180);
-      // dice = new Dice();
-      // dice.mtxLocal.translateX(5);
-      // dice.mtxLocal.rotateX(90);
-      // viewport.getBranch().addChild(dice);
 
       viewport.addEventListener(ƒ.EVENT_POINTER.DOWN, this.executeTurn);
       viewport.activatePointerEvent(ƒ.EVENT_POINTER.DOWN, true);
