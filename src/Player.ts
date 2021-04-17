@@ -11,7 +11,7 @@ namespace Malefiz {
       for (let i: number = 1; i <= 5; i++) {
         let position: ƒ.Vector2 = graph.nodes.get("S" + _color + i).position;
         let token: Token = new Token(_color + i, this.colorToCSSMap.get(_color), _type, graph.nodes.get("S" + _color + i).label, position);
-        token.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder")));
+        token.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder", 15)));
         this.#tokens.addChild(token);
         graph.nodes.get("S" + _color + i).token = token;
       }

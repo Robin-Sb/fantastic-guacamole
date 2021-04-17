@@ -224,7 +224,7 @@ namespace Malefiz {
     
     private static addBarrier(_x: number, _y: number): void {
       let barrier: Token = new Token("B" + _x + "|" + _y, ƒ.Color.CSS("white"), TYPE.BARRIER, _x + "|" + _y, normNodePosition(new ƒ.Vector2(_x, _y)));
-      barrier.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder")));
+      barrier.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder", 15)));
       graph.nodes.get(_x + "|" + _y).token = barrier;
     }
   

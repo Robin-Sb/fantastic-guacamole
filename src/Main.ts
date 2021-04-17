@@ -30,13 +30,7 @@ namespace Malefiz {
     let cmpCamera: ƒ.ComponentCamera = new ƒ.ComponentCamera();
     cmpCamera.mtxPivot.translateZ(17); //17
     cmpCamera.mtxPivot.rotateY(180);
-    // cmpCamera.mtxPivot.rotateX(90);
     ƒAid.addStandardLightComponents(branch, new ƒ.Color(0.8, 0.8, 0.8));
-
-    //let dice = new Dice();
-    // dice.mtxLocal.translateX(5);
-    //branch.addChild(dice);
-
     branch.addChild(board);
     branch.addChild(new ƒ.Node("PossibleMoves"));
 

@@ -38,6 +38,15 @@ var Malefiz;
                 [5, new ƒ.Vector3(0, -90, 0)],
                 [6, new ƒ.Vector3(0, 180, 0)]
             ]);
+            this.frames = 30;
+            this.rotateDice = () => {
+                // this.mtxLocal.rotateX(this.xDiff / 30);
+                // this.mtxLocal.rotateY(this.yDiff / 30);
+                this.xDiff += this.newX / this.frames;
+                this.yDiff += this.newY / this.frames;
+                this.mtxLocal.rotation = new ƒ.Vector3(this.oldX + this.xDiff, this.oldY + this.yDiff, 0);
+                Malefiz.viewport.draw();
+            };
             this.addComponent(new ƒ.ComponentTransform);
             this.addFaces();
             this.mtxLocal.translation = new ƒ.Vector3(-3, 1, 0);
@@ -76,7 +85,16 @@ var Malefiz;
         }
         rollDice() {
             let value = Math.floor((Math.random() * 6) + 1);
-            this.mtxLocal.rotation = this.rotations.get(value);
+            let xSign = Math.round(Math.random()) === 1 ? true : false;
+            let ySign = Math.round(Math.random()) === 1 ? true : false;
+            this.xDiff = 0; // Math.round(this.rotations.get(value).x - this.mtxLocal.rotation.x) // + 1080 : this.mtxLocal.rotation.x - this.rotations.get(value).x - 1080;
+            this.yDiff = 0; // Math.round(this.rotations.get(value).y - this.mtxLocal.rotation.y)  //-  + 1080 : this.mtxLocal.rotation.y - this.rotations.get(value).y - 1080;
+            this.oldX = this.mtxLocal.rotation.x;
+            this.oldY = this.mtxLocal.rotation.y;
+            this.newX = this.rotations.get(value).x - this.oldX + 720;
+            this.newY = this.rotations.get(value).y - this.oldY + 720;
+            new ƒ.Timer(new ƒ.Time(), 30, this.frames, this.rotateDice);
+            //this.mtxLocal.rotation = this.rotations.get(value);
             return value;
         }
         addFace(id) {
@@ -191,11 +209,7 @@ var Malefiz;
         let cmpCamera = new ƒ.ComponentCamera();
         cmpCamera.mtxPivot.translateZ(17); //17
         cmpCamera.mtxPivot.rotateY(180);
-        // cmpCamera.mtxPivot.rotateX(90);
         ƒAid.addStandardLightComponents(branch, new ƒ.Color(0.8, 0.8, 0.8));
-        //let dice = new Dice();
-        // dice.mtxLocal.translateX(5);
-        //branch.addChild(dice);
         branch.addChild(board);
         branch.addChild(new ƒ.Node("PossibleMoves"));
         Malefiz.viewport.initialize("Viewport", branch, cmpCamera, canvas);
@@ -331,96 +345,6 @@ var Malefiz;
     }
     Malefiz.MeshCircle = MeshCircle;
 })(Malefiz || (Malefiz = {}));
-var FudgeCore;
-(function (FudgeCore) {
-    /**
-     * Generate a simple cube with edges of length 1, each face consisting of two trigons
-     * ```plaintext
-     *            4____7
-     *           0/__3/|
-     *            ||5_||6
-     *           1|/_2|/
-     * ```
-     * @authors Jirka Dell'Oro-Friedl, HFU, 2019
-     */
-    class MeshDiceCube extends FudgeCore.Mesh {
-        constructor(_name = "MeshDiceCube") {
-            super(_name);
-            // this.create();
-        }
-        createVertices() {
-            let vertices = new Float32Array([
-                // front
-                /*0*/ -1, 1, 1, /*1*/ -1, -1, 1, /*2*/ 1, -1, 1, /*3*/ 1, 1, 1,
-                // back
-                /*4*/ -1, 1, -1, /* 5*/ -1, -1, -1, /* 6*/ 1, -1, -1, /* 7*/ 1, 1, -1,
-                // front
-                /*0*/ -1, 1, 1, /*1*/ -1, -1, 1, /*2*/ 1, -1, 1, /*3*/ 1, 1, 1,
-                // back
-                /*4*/ -1, 1, -1, /* 5*/ -1, -1, -1, /* 6*/ 1, -1, -1, /* 7*/ 1, 1, -1,
-                // front
-                /*0*/ -1, 1, 1, /*1*/ -1, -1, 1, /*2*/ 1, -1, 1, /*3*/ 1, 1, 1,
-                // back
-                /*4*/ -1, 1, -1, /* 5*/ -1, -1, -1, /* 6*/ 1, -1, -1, /* 7*/ 1, 1, -1,
-            ]);
-            // scale down to a length of 1 for all edges
-            vertices = vertices.map(_value => _value / 2);
-            return vertices;
-        }
-        createIndices() {
-            let indices = new Uint16Array([
-                // front 0-5
-                1, 2, 0, 2, 3, 0,
-                // back 6-11
-                6, 5, 7, 5, 4, 7,
-                // right 12-17
-                2 + 8, 6 + 8, 3 + 8, 6 + 8, 7 + 8, 3 + 8,
-                // left 18-23
-                5 + 8, 1 + 8, 4 + 8, 1 + 8, 0 + 8, 4 + 8,
-                // bottom 24-29
-                5 + 16, 6 + 16, 1 + 16, 6 + 16, 2 + 16, 1 + 16,
-                // top 30-35
-                4 + 16, 0 + 16, 3 + 16, 7 + 16, 4 + 16, 3 + 16
-            ]);
-            return indices;
-        }
-        createTextureUVs() {
-            let textureUVs = new Float32Array([
-                // front
-                0, 0.75, 0, 0.5, 0.25, 0.5, 0.25, 0.75,
-                // /*0*/ 0, 0, /*1*/ 0, 1,  /*2*/ 1, 1, /*3*/ 1, 0,
-                // back
-                /*0,8*/ 0.5, 0.25, /*1,9*/ 0.5, 0.5, /*2,10*/ 0.75, 0.25, /*3,11*/ 0.75, 0.5,
-                // right / left
-                /*0,8*/ 0, 0, /*1,9*/ 0, 1, /*2,10*/ 1, 1, /*3,11*/ 1, 0,
-                /*4,12*/ -1, 0, /*5,13*/ -1, 1, /*6,14*/ 2, 1, /*7,15*/ 2, 0,
-                // bottom / top
-                /*0,16*/ 1, 0, /*1,17*/ 1, 1, /*2,18*/ 1, 2, /*3,19*/ 1, -1,
-                /*4,20*/ 0, 0, /*5,21*/ 0, 1, /*6,22*/ 0, 2, /*7,23*/ 0, -1
-            ]);
-            return textureUVs;
-        }
-        createFaceNormals() {
-            let normals = new Float32Array([
-                // front
-                /*0*/ 0, 0, 1, /*1*/ 0, 0, 1, /*2*/ 0, 0, 1, /*3*/ 0, 0, 1,
-                // back
-                /*4*/ 0, 0, -1, /*5*/ 0, 0, -1, /*6*/ 0, 0, -1, /*7*/ 0, 0, -1,
-                // right
-                /*8*/ -1, 0, 0, /*9*/ -1, 0, 0, /*10*/ 1, 0, 0, /*11*/ 1, 0, 0,
-                // left
-                /*12*/ -1, 0, 0, /*13*/ -1, 0, 0, /*14*/ 1, 0, 0, /*15*/ 1, 0, 0,
-                // bottom
-                /*16*/ 0, 1, 0, /*17*/ 0, -1, 0, /*18*/ 0, -1, 0, /*19*/ 0, 1, 0,
-                // top 
-                /*20*/ 0, 1, 0, /*21*/ 0, -1, 0, /*22*/ 0, -1, 0, /*23*/ 0, 1, 0
-            ]);
-            return normals;
-        }
-    }
-    MeshDiceCube.iSubclass = FudgeCore.Mesh.registerSubclass(MeshDiceCube);
-    FudgeCore.MeshDiceCube = MeshDiceCube;
-})(FudgeCore || (FudgeCore = {}));
 var Malefiz;
 (function (Malefiz) {
     class Player {
@@ -432,7 +356,7 @@ var Malefiz;
             for (let i = 1; i <= 5; i++) {
                 let position = Malefiz.graph.nodes.get("S" + _color + i).position;
                 let token = new Malefiz.Token(_color + i, this.colorToCSSMap.get(_color), _type, Malefiz.graph.nodes.get("S" + _color + i).label, position);
-                token.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder")));
+                token.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder", 15)));
                 this.#tokens.addChild(token);
                 Malefiz.graph.nodes.get("S" + _color + i).token = token;
             }
@@ -857,7 +781,7 @@ var Malefiz;
         }
         static addBarrier(_x, _y) {
             let barrier = new Malefiz.Token("B" + _x + "|" + _y, ƒ.Color.CSS("white"), Malefiz.TYPE.BARRIER, _x + "|" + _y, normNodePosition(new ƒ.Vector2(_x, _y)));
-            barrier.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder")));
+            barrier.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder", 15)));
             Malefiz.graph.nodes.get(_x + "|" + _y).token = barrier;
         }
     }
