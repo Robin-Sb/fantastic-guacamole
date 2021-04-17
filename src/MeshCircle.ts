@@ -25,17 +25,14 @@ namespace Malefiz {
         let unitX: number = unitVertices[k];
         let unitY: number = unitVertices[k + 1];
        
-        // vertex bottom/top with x, y, z
         vertices.push(unitX);
         vertices.push(unitY);
         vertices.push(valueZ);
 
-        //normals bottom/top with x, y, z
         normals.push(0);
         normals.push(0);
         normals.push(valueZ);
 
-        // texCoords bottom/top with u, v
         texCoords.push(-unitX * 0.5 + 0.5);
         texCoords.push(-unitY * 0.5 + 0.5);
       }

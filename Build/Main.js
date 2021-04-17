@@ -291,15 +291,12 @@ var Malefiz;
             for (let j = 0, k = 0; j < this.sections; j++, k += 3) {
                 let unitX = unitVertices[k];
                 let unitY = unitVertices[k + 1];
-                // vertex bottom/top with x, y, z
                 vertices.push(unitX);
                 vertices.push(unitY);
                 vertices.push(valueZ);
-                //normals bottom/top with x, y, z
                 normals.push(0);
                 normals.push(0);
                 normals.push(valueZ);
-                // texCoords bottom/top with u, v
                 texCoords.push(-unitX * 0.5 + 0.5);
                 texCoords.push(-unitY * 0.5 + 0.5);
             }
