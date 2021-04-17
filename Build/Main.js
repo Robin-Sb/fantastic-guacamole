@@ -40,9 +40,9 @@ var Malefiz;
             ]);
             this.frames = 30;
             this.rotateDice = () => {
-                this.DiffX += this.newX / this.frames;
-                this.DiffY += this.newY / this.frames;
-                this.mtxLocal.rotation = new ƒ.Vector3(this.oldX + this.DiffX, this.oldY + this.DiffY, 0);
+                this.diffX += this.newX / this.frames;
+                this.diffY += this.newY / this.frames;
+                this.mtxLocal.rotation = new ƒ.Vector3(this.oldX + this.diffX, this.oldY + this.diffY, 0);
                 Malefiz.viewport.draw();
             };
             this.addComponent(new ƒ.ComponentTransform);
@@ -83,8 +83,8 @@ var Malefiz;
         }
         rollDice() {
             let value = Math.floor((Math.random() * 6) + 1);
-            this.DiffX = 0;
-            this.DiffY = 0;
+            this.diffX = 0;
+            this.diffY = 0;
             this.oldX = this.mtxLocal.rotation.x;
             this.oldY = this.mtxLocal.rotation.y;
             this.newX = this.rotations.get(value).x - this.oldX + 720;

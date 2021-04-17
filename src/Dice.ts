@@ -8,8 +8,8 @@ namespace Malefiz {
       [5, new ƒ.Vector3(0, -90, 0)],
       [6, new ƒ.Vector3(0, 180, 0)]
     ]);
-    private DiffX: number;
-    private DiffY: number;
+    private diffX: number;
+    private diffY: number;
     private oldX: number;
     private oldY: number;
     private newX: number;
@@ -59,8 +59,8 @@ namespace Malefiz {
 
     public rollDice(): number {
       let value: number = Math.floor((Math.random() * 6) + 1);
-      this.DiffX = 0;
-      this.DiffY = 0; 
+      this.diffX = 0;
+      this.diffY = 0; 
       this.oldX = this.mtxLocal.rotation.x;
       this.oldY = this.mtxLocal.rotation.y;
       this.newX = this.rotations.get(value).x - this.oldX + 720;
@@ -70,9 +70,9 @@ namespace Malefiz {
     }
 
     private rotateDice = (): void => {
-      this.DiffX += this.newX / this.frames;
-      this.DiffY += this.newY / this.frames;
-      this.mtxLocal.rotation = new ƒ.Vector3(this.oldX + this.DiffX, this.oldY + this.DiffY, 0);
+      this.diffX += this.newX / this.frames;
+      this.diffY += this.newY / this.frames;
+      this.mtxLocal.rotation = new ƒ.Vector3(this.oldX + this.diffX, this.oldY + this.diffY, 0);
       viewport.draw();
     }
 
