@@ -8,15 +8,13 @@ namespace Malefiz {
       [5, new ƒ.Vector3(0, -90, 0)],
       [6, new ƒ.Vector3(0, 180, 0)]
     ]);
-
-    private xDiff: number;
-    private yDiff: number;
+    private DiffX: number;
+    private DiffY: number;
     private oldX: number;
     private oldY: number;
     private newX: number;
     private newY: number;
     private frames: number = 30;
-
 
     constructor() {
       super("Dice");
@@ -61,25 +59,20 @@ namespace Malefiz {
 
     public rollDice(): number {
       let value: number = Math.floor((Math.random() * 6) + 1);
-      let xSign: boolean = Math.round(Math.random()) === 1 ? true : false; 
-      let ySign: boolean = Math.round(Math.random()) === 1 ? true : false; 
-      this.xDiff = 0; // Math.round(this.rotations.get(value).x - this.mtxLocal.rotation.x) // + 1080 : this.mtxLocal.rotation.x - this.rotations.get(value).x - 1080;
-      this.yDiff = 0; // Math.round(this.rotations.get(value).y - this.mtxLocal.rotation.y)  //-  + 1080 : this.mtxLocal.rotation.y - this.rotations.get(value).y - 1080;
+      this.DiffX = 0;
+      this.DiffY = 0; 
       this.oldX = this.mtxLocal.rotation.x;
       this.oldY = this.mtxLocal.rotation.y;
       this.newX = this.rotations.get(value).x - this.oldX + 720;
       this.newY = this.rotations.get(value).y - this.oldY + 720;
       new ƒ.Timer(new ƒ.Time(), 30, this.frames, this.rotateDice);
-      //this.mtxLocal.rotation = this.rotations.get(value);
       return value;
     }
 
     private rotateDice = (): void => {
-      // this.mtxLocal.rotateX(this.xDiff / 30);
-      // this.mtxLocal.rotateY(this.yDiff / 30);
-      this.xDiff += this.newX / this.frames;
-      this.yDiff += this.newY / this.frames;
-      this.mtxLocal.rotation = new ƒ.Vector3(this.oldX + this.xDiff, this.oldY + this.yDiff, 0);
+      this.DiffX += this.newX / this.frames;
+      this.DiffY += this.newY / this.frames;
+      this.mtxLocal.rotation = new ƒ.Vector3(this.oldX + this.DiffX, this.oldY + this.DiffY, 0);
       viewport.draw();
     }
 
