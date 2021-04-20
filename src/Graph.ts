@@ -19,6 +19,30 @@ namespace Malefiz {
       let newNode: Field = new Field(_label, _position, _color);
       this.nodes.set(_label, newNode);
     }
+
+
+    public static findNodesWithDistanceToNode(_node: Field, _distance: number, adjacentFields: Field[], previousFields: Field[] = []): void {
+      _distance--;
+      previousFields.push(_node);
+      if (_distance >= 0) {
+        for (let edge of _node.edgesOfNode) {
+          if (edge.endNode.token?.type === TYPE.BARRIER && _distance != 0) 
+            continue;
+
+          let fieldAlreadyPassed: boolean = false;
+          for (let previousField of previousFields) {
+            if (edge.endNode === previousField) 
+              fieldAlreadyPassed = true;
+          }
+
+          if (!fieldAlreadyPassed)
+            this.findNodesWithDistanceToNode(edge.endNode, _distance, adjacentFields, previousFields);
+        }
+      } else {
+        adjacentFields.push(_node);
+      }
+    }
+
   }
 
   export class Field extends ƒ.Node {

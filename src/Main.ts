@@ -88,7 +88,7 @@ namespace Malefiz {
       }
     }
     if (!isSelected) {
-      players.push(new Player(_type, typeToColorMap.get(_type)));
+      players.push(new HumanPlayer(_type, typeToColorMap.get(_type)));
     }
     drawScene();
   }

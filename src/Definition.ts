@@ -9,7 +9,7 @@ namespace Malefiz {
     ROLL,
     PICK_TOKEN,
     MOVE_TOKEN,
-    MOVE_BARRIER
+    SET_BARRIER
   }
 
   export enum TYPE {
@@ -19,6 +19,13 @@ namespace Malefiz {
     PLAYER_BLUE,
     BARRIER,
     WIN
+  }
+
+  export enum INSTRUCTION {
+    NEXT_TURN, 
+    PICK_TOKEN,
+    MOVE_BARRIER,
+    FINISH_GAME
   }
 
 }

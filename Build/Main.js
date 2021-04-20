@@ -1,6 +1,66 @@
 "use strict";
 var Malefiz;
 (function (Malefiz) {
+    class Player {
+        constructor(_type, _color) {
+            this.colorToCSSMap = new Map([[Malefiz.COLOR.RED, ƒ.Color.CSS("red")], [Malefiz.COLOR.GREEN, ƒ.Color.CSS("LawnGreen")], [Malefiz.COLOR.YELLOW, ƒ.Color.CSS("yellow")], [Malefiz.COLOR.BLUE, ƒ.Color.CSS("DeepSkyBlue")]]);
+            this.color = _color;
+            this.#tokens = new ƒ.Node("Token" + _color);
+            Malefiz.viewport.getBranch().addChild(this.#tokens);
+            for (let i = 1; i <= 5; i++) {
+                let position = Malefiz.graph.nodes.get("S" + _color + i).position;
+                let token = new Malefiz.Token(_color + i, this.colorToCSSMap.get(_color), _type, Malefiz.graph.nodes.get("S" + _color + i).label, position);
+                token.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder", 15)));
+                this.#tokens.addChild(token);
+                Malefiz.graph.nodes.get("S" + _color + i).token = token;
+            }
+        }
+        #tokens;
+        get tokens() {
+            return this.#tokens;
+        }
+        removeTokens() {
+            Malefiz.viewport.getBranch().removeChild(this.#tokens);
+        }
+        getColor() {
+            return this.colorToCSSMap.get(this.color);
+        }
+        getName() {
+            switch (this.color) {
+                case Malefiz.COLOR.BLUE:
+                    return "Blue";
+                case Malefiz.COLOR.GREEN:
+                    return "Green";
+                case Malefiz.COLOR.YELLOW:
+                    return "Yellow";
+                case Malefiz.COLOR.RED:
+                    return "Red";
+            }
+        }
+    }
+    Malefiz.Player = Player;
+})(Malefiz || (Malefiz = {}));
+/// <reference path="Player.ts" />
+var Malefiz;
+/// <reference path="Player.ts" />
+(function (Malefiz) {
+    class AIPlayer extends Malefiz.Player {
+        pickToken(_event, diceValue) {
+            return true;
+        }
+        setBarrier() {
+            throw new Error("Method not implemented.");
+        }
+        moveToken(_event) {
+            return Malefiz.INSTRUCTION.NEXT_TURN;
+        }
+        moveBarrier(_event) {
+        }
+    }
+    Malefiz.AIPlayer = AIPlayer;
+})(Malefiz || (Malefiz = {}));
+var Malefiz;
+(function (Malefiz) {
     let COLOR;
     (function (COLOR) {
         COLOR["RED"] = "R";
@@ -13,7 +73,7 @@ var Malefiz;
         STAGE[STAGE["ROLL"] = 0] = "ROLL";
         STAGE[STAGE["PICK_TOKEN"] = 1] = "PICK_TOKEN";
         STAGE[STAGE["MOVE_TOKEN"] = 2] = "MOVE_TOKEN";
-        STAGE[STAGE["MOVE_BARRIER"] = 3] = "MOVE_BARRIER";
+        STAGE[STAGE["SET_BARRIER"] = 3] = "SET_BARRIER";
     })(STAGE = Malefiz.STAGE || (Malefiz.STAGE = {}));
     let TYPE;
     (function (TYPE) {
@@ -24,6 +84,13 @@ var Malefiz;
         TYPE[TYPE["BARRIER"] = 4] = "BARRIER";
         TYPE[TYPE["WIN"] = 5] = "WIN";
     })(TYPE = Malefiz.TYPE || (Malefiz.TYPE = {}));
+    let INSTRUCTION;
+    (function (INSTRUCTION) {
+        INSTRUCTION[INSTRUCTION["NEXT_TURN"] = 0] = "NEXT_TURN";
+        INSTRUCTION[INSTRUCTION["PICK_TOKEN"] = 1] = "PICK_TOKEN";
+        INSTRUCTION[INSTRUCTION["MOVE_BARRIER"] = 2] = "MOVE_BARRIER";
+        INSTRUCTION[INSTRUCTION["FINISH_GAME"] = 3] = "FINISH_GAME";
+    })(INSTRUCTION = Malefiz.INSTRUCTION || (Malefiz.INSTRUCTION = {}));
 })(Malefiz || (Malefiz = {}));
 var Malefiz;
 (function (Malefiz) {
@@ -151,6 +218,26 @@ var Malefiz;
             let newNode = new Field(_label, _position, _color);
             this.nodes.set(_label, newNode);
         }
+        static findNodesWithDistanceToNode(_node, _distance, adjacentFields, previousFields = []) {
+            _distance--;
+            previousFields.push(_node);
+            if (_distance >= 0) {
+                for (let edge of _node.edgesOfNode) {
+                    if (edge.endNode.token?.type === Malefiz.TYPE.BARRIER && _distance != 0)
+                        continue;
+                    let fieldAlreadyPassed = false;
+                    for (let previousField of previousFields) {
+                        if (edge.endNode === previousField)
+                            fieldAlreadyPassed = true;
+                    }
+                    if (!fieldAlreadyPassed)
+                        this.findNodesWithDistanceToNode(edge.endNode, _distance, adjacentFields, previousFields);
+                }
+            }
+            else {
+                adjacentFields.push(_node);
+            }
+        }
     }
     Malefiz.Graph = Graph;
     class Field extends ƒ.Node {
@@ -177,6 +264,138 @@ var Malefiz;
             return this.#endNode;
         }
     }
+})(Malefiz || (Malefiz = {}));
+/// <reference path="Player.ts" />
+var Malefiz;
+/// <reference path="Player.ts" />
+(function (Malefiz) {
+    class HumanPlayer extends Malefiz.Player {
+        constructor(_type, _color) {
+            super(_type, _color);
+            this.selectedToken = null;
+            this.moveableBarrier = null;
+            this.moveBarrier = (_event) => {
+                let ray = Malefiz.viewport.getRayFromClient(new ƒ.Vector2(_event.canvasX, _event.canvasY));
+                let intersection = ray.intersectPlane(this.moveableBarrier.mtxLocal.translation, new ƒ.Vector3(0, 0, -1));
+                this.moveableBarrier.mtxLocal.translation = new ƒ.Vector3(intersection.x, intersection.y, this.moveableBarrier.mtxLocal.translation.z);
+                Malefiz.viewport.draw();
+            };
+        }
+        pickToken(_event, diceValue) {
+            let validTokenIsPicked = this.pickTokenFromViewport(_event);
+            if (!validTokenIsPicked)
+                this.selectedToken = null;
+            let adjacentFields = [];
+            if (this.selectedToken) {
+                Malefiz.Graph.findNodesWithDistanceToNode(Malefiz.graph.nodes.get(this.selectedToken.field), diceValue, adjacentFields);
+            }
+            this.removeOwnTokensFrom(adjacentFields);
+            Malefiz.PlayerController.drawPossibleMoves(adjacentFields);
+            return validTokenIsPicked;
+        }
+        setBarrier() {
+            let x = this.moveableBarrier.mtxLocal.translation.x;
+            let y = this.moveableBarrier.mtxLocal.translation.y;
+            let convertedFieldLabel = (Math.round(x * 2)).toString() + "|" + (Math.round(y * 2)).toString();
+            let barrierWasSet = false;
+            if (Malefiz.graph.nodes.has(convertedFieldLabel) && !(Malefiz.graph.nodes.get(convertedFieldLabel).token) && Math.round(y * 2) >= -3) {
+                Malefiz.graph.nodes.get(convertedFieldLabel).token = this.moveableBarrier;
+                this.moveableBarrier.mtxLocal.translation = (Malefiz.graph.nodes.get(convertedFieldLabel).position).toVector3();
+                this.moveableBarrier.field = Malefiz.graph.nodes.get(convertedFieldLabel).label;
+                this.moveableBarrier = null;
+                barrierWasSet = true;
+                Malefiz.viewport.activatePointerEvent("\u0192pointermove" /* MOVE */, false);
+            }
+            return barrierWasSet;
+        }
+        moveToken(_event) {
+            let nextInstruction = Malefiz.INSTRUCTION.PICK_TOKEN;
+            let selectedField = this.pickDisplayedField(_event);
+            if (selectedField) {
+                let fieldOfCorrespondingDisplayedField = Malefiz.graph.nodes.get(selectedField.field);
+                this.resetHitEnemyToken(fieldOfCorrespondingDisplayedField);
+                let proceedToNextStage = true;
+                if (this.prepareBarrierMove(fieldOfCorrespondingDisplayedField)) {
+                    nextInstruction = Malefiz.INSTRUCTION.MOVE_BARRIER;
+                    proceedToNextStage = false;
+                }
+                if (Malefiz.graph.nodes.get(selectedField.field).token?.type === Malefiz.TYPE.WIN) {
+                    nextInstruction = Malefiz.INSTRUCTION.FINISH_GAME;
+                    proceedToNextStage = false;
+                }
+                if (proceedToNextStage)
+                    nextInstruction = Malefiz.INSTRUCTION.NEXT_TURN;
+                this.placeSelectedTokenAtField(selectedField);
+            }
+            Malefiz.viewport.getBranch().getChildrenByName("PossibleMoves")[0].removeAllChildren();
+            return nextInstruction;
+        }
+        pickTokenFromViewport(_event) {
+            let validTokenIsPicked = false;
+            let picks = ƒ.Picker.pickViewport(Malefiz.viewport, new ƒ.Vector2(_event.canvasX, _event.canvasY));
+            for (let pick of picks) {
+                if (!(pick.node instanceof Malefiz.Token))
+                    continue;
+                for (let token of this.tokens.getChildren()) {
+                    if (pick.node === token) {
+                        validTokenIsPicked = true;
+                        this.selectedToken = token;
+                    }
+                }
+            }
+            return validTokenIsPicked;
+        }
+        removeOwnTokensFrom(adjacentFields) {
+            for (let i = 0; i < adjacentFields.length; i++) {
+                if (adjacentFields[i].token?.type === this.selectedToken.type) {
+                    adjacentFields.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+        pickDisplayedField(_event) {
+            let selectedField;
+            let picks = ƒ.Picker.pickViewport(Malefiz.viewport, new ƒ.Vector2(_event.canvasX, _event.canvasY));
+            for (let pick of picks) {
+                if (!(pick.node instanceof Malefiz.DisplayedField))
+                    continue;
+                for (let field of Malefiz.viewport.getBranch().getChildrenByName("PossibleMoves")[0].getChildren()) {
+                    if (pick.node === field) {
+                        selectedField = field;
+                    }
+                }
+            }
+            return selectedField;
+        }
+        resetHitEnemyToken(fieldOfCorrespondingDisplayedField) {
+            if (Malefiz.PlayerController.playerTypes.has(fieldOfCorrespondingDisplayedField.token?.type)) {
+                for (let i = 1; i <= 5; i++) {
+                    let startField = Malefiz.graph.nodes.get("S" + Malefiz.typeToColorMap.get(fieldOfCorrespondingDisplayedField.token?.type) + i);
+                    if (!startField.token) {
+                        startField.token = fieldOfCorrespondingDisplayedField.token;
+                        fieldOfCorrespondingDisplayedField.token.mtxLocal.translation = startField.position.toVector3();
+                        fieldOfCorrespondingDisplayedField.token.field = startField.label;
+                        break;
+                    }
+                }
+            }
+        }
+        placeSelectedTokenAtField(fieldToPlace) {
+            Malefiz.graph.nodes.get(this.selectedToken.field).token = null;
+            this.selectedToken.field = fieldToPlace.field;
+            Malefiz.graph.nodes.get(fieldToPlace.field).token = this.selectedToken;
+            this.selectedToken.mtxLocal.translation = fieldToPlace.mtxLocal.translation;
+        }
+        prepareBarrierMove(selectedField) {
+            if (selectedField.token?.type === Malefiz.TYPE.BARRIER) {
+                this.moveableBarrier = selectedField.token;
+                Malefiz.viewport.activatePointerEvent("\u0192pointermove" /* MOVE */, true);
+                return true;
+            }
+            return false;
+        }
+    }
+    Malefiz.HumanPlayer = HumanPlayer;
 })(Malefiz || (Malefiz = {}));
 /// <reference path="Definition.ts" />
 var Malefiz;
@@ -252,7 +471,7 @@ var Malefiz;
             }
         }
         if (!isSelected) {
-            players.push(new Malefiz.Player(_type, Malefiz.typeToColorMap.get(_type)));
+            players.push(new Malefiz.HumanPlayer(_type, Malefiz.typeToColorMap.get(_type)));
         }
         drawScene();
     }
@@ -339,53 +558,12 @@ var Malefiz;
 })(Malefiz || (Malefiz = {}));
 var Malefiz;
 (function (Malefiz) {
-    class Player {
-        constructor(_type, _color) {
-            this.colorToCSSMap = new Map([[Malefiz.COLOR.RED, ƒ.Color.CSS("red")], [Malefiz.COLOR.GREEN, ƒ.Color.CSS("LawnGreen")], [Malefiz.COLOR.YELLOW, ƒ.Color.CSS("yellow")], [Malefiz.COLOR.BLUE, ƒ.Color.CSS("DeepSkyBlue")]]);
-            this.color = _color;
-            this.#tokens = new ƒ.Node("Token" + _color);
-            Malefiz.viewport.getBranch().addChild(this.#tokens);
-            for (let i = 1; i <= 5; i++) {
-                let position = Malefiz.graph.nodes.get("S" + _color + i).position;
-                let token = new Malefiz.Token(_color + i, this.colorToCSSMap.get(_color), _type, Malefiz.graph.nodes.get("S" + _color + i).label, position);
-                token.addComponent(new ƒ.ComponentMesh(new ƒ.MeshCylinder("MeshCylinder", 15)));
-                this.#tokens.addChild(token);
-                Malefiz.graph.nodes.get("S" + _color + i).token = token;
-            }
-        }
-        #tokens;
-        get tokens() {
-            return this.#tokens;
-        }
-        removeTokens() {
-            Malefiz.viewport.getBranch().removeChild(this.#tokens);
-        }
-        getColor() {
-            return this.colorToCSSMap.get(this.color);
-        }
-        getName() {
-            switch (this.color) {
-                case Malefiz.COLOR.BLUE:
-                    return "Blue";
-                case Malefiz.COLOR.GREEN:
-                    return "Green";
-                case Malefiz.COLOR.YELLOW:
-                    return "Yellow";
-                case Malefiz.COLOR.RED:
-                    return "Red";
-            }
-        }
-    }
-    Malefiz.Player = Player;
-})(Malefiz || (Malefiz = {}));
-var Malefiz;
-(function (Malefiz) {
     class PlayerController {
         constructor(_players) {
-            this.playerTypes = new Set([Malefiz.TYPE.PLAYER_RED, Malefiz.TYPE.PLAYER_GREEN, Malefiz.TYPE.PLAYER_YELLOW, Malefiz.TYPE.PLAYER_BLUE]);
             this.currentTurn = 0;
             this.currentStage = Malefiz.STAGE.ROLL;
             this.executeTurn = (_event) => {
+                let currentPlayer = this.players[this.currentTurn % this.players.length];
                 switch (this.currentStage) {
                     case Malefiz.STAGE.ROLL:
                         if (this.dice.pickDice(_event)) {
@@ -394,58 +572,137 @@ var Malefiz;
                         }
                         break;
                     case Malefiz.STAGE.PICK_TOKEN:
-                        if (this.pickToken(_event)) {
+                        if (currentPlayer.pickToken(_event, this.diceValue)) {
                             this.currentStage = Malefiz.STAGE.MOVE_TOKEN;
                         }
                         break;
                     case Malefiz.STAGE.MOVE_TOKEN:
-                        let proceedToNextStage = this.moveToken(_event);
-                        if (proceedToNextStage) {
-                            if (this.moveableBarrier) {
-                                this.currentStage = Malefiz.STAGE.MOVE_BARRIER;
-                            }
-                            else {
+                        let nextInstruction = currentPlayer.moveToken(_event);
+                        switch (nextInstruction) {
+                            case Malefiz.INSTRUCTION.MOVE_BARRIER:
+                                this.currentStage = Malefiz.STAGE.SET_BARRIER;
+                                break;
+                            case Malefiz.INSTRUCTION.NEXT_TURN:
                                 this.currentStage = Malefiz.STAGE.ROLL;
+                                this.currentTurn++;
                                 this.updateCurrentPlayerDisplay();
-                            }
+                                break;
+                            case Malefiz.INSTRUCTION.PICK_TOKEN:
+                                if (!currentPlayer.pickToken(_event, this.diceValue)) {
+                                    this.currentStage = Malefiz.STAGE.PICK_TOKEN;
+                                }
+                                break;
+                            case Malefiz.INSTRUCTION.FINISH_GAME:
+                                alert(currentPlayer.getName() + " won!");
+                                currentPlayer.removeTokens();
+                                this.players.splice(this.currentTurn % this.players.length, 1);
+                                this.currentTurn++;
+                                break;
                         }
-                        let pickedTokenInstead = false;
-                        if (!proceedToNextStage) {
-                            this.pickToken(_event);
-                            pickedTokenInstead = true;
-                        }
-                        if (!pickedTokenInstead && !proceedToNextStage)
-                            this.currentStage = Malefiz.STAGE.PICK_TOKEN;
                         break;
-                    case Malefiz.STAGE.MOVE_BARRIER:
-                        if (this.setBarrier()) {
+                    // let proceedToNextStage: boolean = this.moveToken(_event);
+                    // if (proceedToNextStage) {
+                    //   if (this.moveableBarrier) {
+                    //     this.currentStage = STAGE.MOVE_BARRIER;
+                    //   }
+                    //   else {
+                    //     this.currentStage = STAGE.ROLL;
+                    //     this.updateCurrentPlayerDisplay();
+                    //   }
+                    // }
+                    // let pickedTokenInstead: boolean = false;
+                    // if (!proceedToNextStage) {
+                    //   this.pickToken(_event);
+                    //   pickedTokenInstead = true;
+                    // }
+                    // if (!pickedTokenInstead && !proceedToNextStage)
+                    //   this.currentStage = STAGE.PICK_TOKEN;
+                    // break;
+                    case Malefiz.STAGE.SET_BARRIER:
+                        if (currentPlayer.setBarrier()) {
                             this.currentStage = Malefiz.STAGE.ROLL;
-                            Malefiz.viewport.activatePointerEvent("\u0192pointermove" /* MOVE */, false);
+                            this.currentTurn++;
                             this.updateCurrentPlayerDisplay();
                         }
                         break;
                 }
                 Malefiz.viewport.draw();
             };
+            // private pickToken(_event: ƒ.EventPointer): boolean {
+            //   let validTokenIsPicked: boolean = false;
+            //   let picks: ƒ.Pick[] = ƒ.Picker.pickViewport(viewport, new ƒ.Vector2(_event.canvasX, _event.canvasY));
+            //   for (let pick of picks) {
+            //     if (!(pick.node instanceof Token))
+            //       continue;
+            //     for (let token of this.players[this.currentTurn % this.players.length].tokens.getChildren()) {
+            //       if (pick.node === token) {
+            //         validTokenIsPicked = true;
+            //         this.pickedToken = <Token> token;  
+            //       }
+            //     }
+            //   }
+            //   if (!validTokenIsPicked)
+            //     this.pickedToken = null;
+            //   let adjacentFields: Field[] = []; 
+            //   if (this.pickedToken) {
+            //     this.findNodesWithDistanceToNode(graph.nodes.get(this.pickedToken.field), this.diceValue, adjacentFields);
+            //   }
+            //   for (let i: number = 0; i < adjacentFields.length; i++) {
+            //     if (adjacentFields[i].token?.type === this.pickedToken.type) {
+            //       adjacentFields.splice(i, 1);
+            //       i--;
+            //     }
+            //   }
+            //   PlayerController.drawPossibleMoves(adjacentFields);
+            //   return validTokenIsPicked;
+            // }
+            // private moveToken(_event: ƒ.EventPointer): boolean {
+            //   let tokenIsMovable: boolean = false;
+            //   let picks: ƒ.Pick[] = ƒ.Picker.pickViewport(viewport, new ƒ.Vector2(_event.canvasX, _event.canvasY));
+            //   let selectedField: DisplayedField;
+            //   for (let pick of picks) {
+            //     if (!(pick.node instanceof DisplayedField)) 
+            //       continue;
+            //     for (let field of viewport.getBranch().getChildrenByName("PossibleMoves")[0].getChildren() as DisplayedField[]) {
+            //       if (pick.node === field) {
+            //         tokenIsMovable = true;
+            //         selectedField = field;
+            //       }
+            //     }
+            //   }
+            //   if (tokenIsMovable) {
+            //     let fieldOfCorrespondingDisplayedField: Field = graph.nodes.get(selectedField.field);
+            //     if (this.playerTypes.has(fieldOfCorrespondingDisplayedField.token?.type)) {
+            //       for (let i: number = 1; i <= 5; i++) {
+            //         let startField: Field = graph.nodes.get("S" + typeToColorMap.get(fieldOfCorrespondingDisplayedField.token?.type) + i);
+            //         if (!startField.token) {
+            //           startField.token = fieldOfCorrespondingDisplayedField.token;
+            //           fieldOfCorrespondingDisplayedField.token.mtxLocal.translation = startField.position.toVector3();
+            //           fieldOfCorrespondingDisplayedField.token.field = startField.label;
+            //           break;
+            //         }
+            //       }
+            //     } else if (fieldOfCorrespondingDisplayedField.token?.type === TYPE.BARRIER) {
+            //       this.moveableBarrier = fieldOfCorrespondingDisplayedField.token;
+            //       viewport.activatePointerEvent(ƒ.EVENT_POINTER.MOVE, true);
+            //     }
+            //     if (graph.nodes.get(selectedField.field).token?.type === TYPE.WIN) {
+            //       let currentPlayer: Player = this.players[this.currentTurn % this.players.length];
+            //       alert(currentPlayer.getName() + " won!");
+            //       currentPlayer.removeTokens();
+            //       this.players.splice(this.currentTurn % this.players.length, 1);
+            //     }
+            //     this.currentTurn++;
+            //     graph.nodes.get(this.pickedToken.field).token = null;
+            //     this.pickedToken.field = selectedField.field;
+            //     graph.nodes.get(selectedField.field).token = this.pickedToken;
+            //     this.pickedToken.mtxLocal.translation = selectedField.mtxLocal.translation;
+            //   }  
+            //   viewport.getBranch().getChildrenByName("PossibleMoves")[0].removeAllChildren();
+            //   return tokenIsMovable;
+            // }
             this.moveBarrier = (_event) => {
-                let ray = Malefiz.viewport.getRayFromClient(new ƒ.Vector2(_event.canvasX, _event.canvasY));
-                let intersection = ray.intersectPlane(this.moveableBarrier.mtxLocal.translation, new ƒ.Vector3(0, 0, -1));
-                this.moveableBarrier.mtxLocal.translation = new ƒ.Vector3(intersection.x, intersection.y, this.moveableBarrier.mtxLocal.translation.z);
-                Malefiz.viewport.draw();
-            };
-            this.setBarrier = () => {
-                let x = this.moveableBarrier.mtxLocal.translation.x;
-                let y = this.moveableBarrier.mtxLocal.translation.y;
-                let convertedFieldLabel = (Math.round(x * 2)).toString() + "|" + (Math.round(y * 2)).toString();
-                let barrierWasSet = false;
-                if (Malefiz.graph.nodes.has(convertedFieldLabel) && !(Malefiz.graph.nodes.get(convertedFieldLabel).token) && Math.round(y * 2) >= -3) {
-                    Malefiz.graph.nodes.get(convertedFieldLabel).token = this.moveableBarrier;
-                    this.moveableBarrier.mtxLocal.translation = (Malefiz.graph.nodes.get(convertedFieldLabel).position).toVector3();
-                    this.moveableBarrier.field = Malefiz.graph.nodes.get(convertedFieldLabel).label;
-                    this.moveableBarrier = null;
-                    barrierWasSet = true;
-                }
-                return barrierWasSet;
+                this.players[this.currentTurn % this.players.length].moveBarrier(_event);
             };
             this.players = _players;
             this.dice = new Malefiz.Dice();
@@ -453,109 +710,50 @@ var Malefiz;
             Malefiz.viewport.activatePointerEvent("\u0192pointerdown" /* DOWN */, true);
             Malefiz.viewport.addEventListener("\u0192pointermove" /* MOVE */, this.moveBarrier);
         }
-        pickToken(_event) {
-            let validTokenIsPicked = false;
-            let picks = ƒ.Picker.pickViewport(Malefiz.viewport, new ƒ.Vector2(_event.canvasX, _event.canvasY));
-            for (let pick of picks) {
-                if (!(pick.node instanceof Malefiz.Token))
-                    continue;
-                for (let token of this.players[this.currentTurn % this.players.length].tokens.getChildren()) {
-                    if (pick.node === token) {
-                        validTokenIsPicked = true;
-                        this.pickedToken = token;
-                    }
-                }
-            }
-            if (!validTokenIsPicked)
-                this.pickedToken = null;
-            let adjacentFields = [];
-            if (this.pickedToken) {
-                this.findNodesWithDistanceToNode(Malefiz.graph.nodes.get(this.pickedToken.field), this.diceValue, adjacentFields);
-            }
-            for (let i = 0; i < adjacentFields.length; i++) {
-                if (adjacentFields[i].token?.type === this.pickedToken.type) {
-                    adjacentFields.splice(i, 1);
-                    i--;
-                }
-            }
-            this.drawPossibleMoves(adjacentFields);
-            return validTokenIsPicked;
-        }
-        moveToken(_event) {
-            let tokenIsMovable = false;
-            let picks = ƒ.Picker.pickViewport(Malefiz.viewport, new ƒ.Vector2(_event.canvasX, _event.canvasY));
-            let selectedField;
-            for (let pick of picks) {
-                if (!(pick.node instanceof Malefiz.DisplayedField))
-                    continue;
-                for (let field of Malefiz.viewport.getBranch().getChildrenByName("PossibleMoves")[0].getChildren()) {
-                    if (pick.node === field) {
-                        tokenIsMovable = true;
-                        selectedField = field;
-                    }
-                }
-            }
-            if (tokenIsMovable) {
-                let fieldOfCorrespondingDisplayedField = Malefiz.graph.nodes.get(selectedField.field);
-                if (this.playerTypes.has(fieldOfCorrespondingDisplayedField.token?.type)) {
-                    for (let i = 1; i <= 5; i++) {
-                        let startField = Malefiz.graph.nodes.get("S" + Malefiz.typeToColorMap.get(fieldOfCorrespondingDisplayedField.token?.type) + i);
-                        if (!startField.token) {
-                            startField.token = fieldOfCorrespondingDisplayedField.token;
-                            fieldOfCorrespondingDisplayedField.token.mtxLocal.translation = startField.position.toVector3();
-                            fieldOfCorrespondingDisplayedField.token.field = startField.label;
-                            break;
-                        }
-                    }
-                }
-                else if (fieldOfCorrespondingDisplayedField.token?.type === Malefiz.TYPE.BARRIER) {
-                    this.moveableBarrier = fieldOfCorrespondingDisplayedField.token;
-                    Malefiz.viewport.activatePointerEvent("\u0192pointermove" /* MOVE */, true);
-                }
-                if (Malefiz.graph.nodes.get(selectedField.field).token?.type === Malefiz.TYPE.WIN) {
-                    let currentPlayer = this.players[this.currentTurn % this.players.length];
-                    alert(currentPlayer.getName() + " won!");
-                    currentPlayer.removeTokens();
-                    this.players.splice(this.currentTurn % this.players.length, 1);
-                }
-                this.currentTurn++;
-                Malefiz.graph.nodes.get(this.pickedToken.field).token = null;
-                this.pickedToken.field = selectedField.field;
-                Malefiz.graph.nodes.get(selectedField.field).token = this.pickedToken;
-                this.pickedToken.mtxLocal.translation = selectedField.mtxLocal.translation;
-            }
-            Malefiz.viewport.getBranch().getChildrenByName("PossibleMoves")[0].removeAllChildren();
-            return tokenIsMovable;
-        }
-        findNodesWithDistanceToNode(_node, _distance, adjacentFields, previousFields = []) {
-            _distance--;
-            previousFields.push(_node);
-            if (_distance >= 0) {
-                for (let edge of _node.edgesOfNode) {
-                    if (edge.endNode.token?.type === Malefiz.TYPE.BARRIER && _distance != 0)
-                        continue;
-                    let fieldAlreadyPassed = false;
-                    for (let previousField of previousFields) {
-                        if (edge.endNode === previousField)
-                            fieldAlreadyPassed = true;
-                    }
-                    if (!fieldAlreadyPassed)
-                        this.findNodesWithDistanceToNode(edge.endNode, _distance, adjacentFields, previousFields);
-                }
-            }
-            else {
-                adjacentFields.push(_node);
-            }
-        }
+        // private setBarrier = (): boolean => {
+        //   let x: number = this.moveableBarrier.mtxLocal.translation.x;
+        //   let y: number = this.moveableBarrier.mtxLocal.translation.y;
+        //   let convertedFieldLabel: string = (Math.round(x * 2)).toString() + "|" + (Math.round(y * 2)).toString();
+        //   let barrierWasSet: boolean = false;
+        //   if (graph.nodes.has(convertedFieldLabel) && !(graph.nodes.get(convertedFieldLabel).token) && Math.round(y * 2) >= -3) {
+        //     graph.nodes.get(convertedFieldLabel).token = this.moveableBarrier;
+        //     this.moveableBarrier.mtxLocal.translation = (graph.nodes.get(convertedFieldLabel).position).toVector3();
+        //     this.moveableBarrier.field = graph.nodes.get(convertedFieldLabel).label;
+        //     this.moveableBarrier = null;
+        //     barrierWasSet = true;
+        //   }
+        //   viewport.activatePointerEvent(ƒ.EVENT_POINTER.MOVE, false);
+        //   return barrierWasSet;
+        // }
+        // private findNodesWithDistanceToNode(_node: Field, _distance: number, adjacentFields: Field[], previousFields: Field[] = []): void {
+        //   _distance--;
+        //   previousFields.push(_node);
+        //   if (_distance >= 0) {
+        //     for (let edge of _node.edgesOfNode) {
+        //       if (edge.endNode.token?.type === TYPE.BARRIER && _distance != 0) 
+        //         continue;
+        //       let fieldAlreadyPassed: boolean = false;
+        //       for (let previousField of previousFields) {
+        //         if (edge.endNode === previousField) 
+        //           fieldAlreadyPassed = true;
+        //       }
+        //       if (!fieldAlreadyPassed)
+        //         this.findNodesWithDistanceToNode(edge.endNode, _distance, adjacentFields, previousFields);
+        //     }
+        //   } else {
+        //     adjacentFields.push(_node);
+        //   }
+        // }
         updateCurrentPlayerDisplay() {
             Malefiz.viewport.getBranch().getChildrenByName("PlayerDisplay")[0].getComponent(ƒ.ComponentMaterial).clrPrimary = this.players[this.currentTurn % this.players.length].getColor();
         }
-        drawPossibleMoves(adjacentFields) {
+        static drawPossibleMoves(adjacentFields) {
             for (let field of adjacentFields) {
                 Malefiz.viewport.getBranch().getChildrenByName("PossibleMoves")[0].addChild(new Malefiz.DisplayedField("MoveField", new ƒ.Vector3(field.position.x, field.position.y, 0.01), ƒ.Color.CSS("yellow"), field.label));
             }
         }
     }
+    PlayerController.playerTypes = new Set([Malefiz.TYPE.PLAYER_RED, Malefiz.TYPE.PLAYER_GREEN, Malefiz.TYPE.PLAYER_YELLOW, Malefiz.TYPE.PLAYER_BLUE]);
     Malefiz.PlayerController = PlayerController;
 })(Malefiz || (Malefiz = {}));
 var Malefiz;

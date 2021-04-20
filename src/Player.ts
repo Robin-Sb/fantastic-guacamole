@@ -1,5 +1,5 @@
 namespace Malefiz {
-  export class Player {
+  export abstract class Player {
     #tokens: ƒ.Node;
     public color: COLOR;
     public colorToCSSMap: Map<COLOR, ƒ.Color> = new Map([[COLOR.RED, ƒ.Color.CSS("red")], [COLOR.GREEN, ƒ.Color.CSS("LawnGreen")], [COLOR.YELLOW, ƒ.Color.CSS("yellow")], [COLOR.BLUE, ƒ.Color.CSS("DeepSkyBlue")]]);
@@ -20,6 +20,11 @@ namespace Malefiz {
     public get tokens() {
       return this.#tokens;
     }
+
+    public abstract pickToken(_event: ƒ.EventPointer, diceValue: number): boolean;
+    public abstract moveToken(_event: ƒ.EventPointer): INSTRUCTION;
+    public abstract setBarrier(): boolean;
+    public abstract moveBarrier(_event: ƒ.EventPointer): void;
 
     public removeTokens(): void {
       viewport.getBranch().removeChild(this.#tokens);
