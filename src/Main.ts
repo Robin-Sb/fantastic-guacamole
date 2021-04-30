@@ -40,10 +40,22 @@ namespace Malefiz {
   }
 
   function addButtonEventListeners(): void {
-    document.querySelector("#select-red").addEventListener("click", selectRed);
-    document.querySelector("#select-green").addEventListener("click", selectGreen);
-    document.querySelector("#select-yellow").addEventListener("click", selectYellow);
-    document.querySelector("#select-blue").addEventListener("click", selectBlue);
+    document.querySelector("#player-red").addEventListener("click", selectRedPlayer);
+    document.querySelector("#player-green").addEventListener("click", selectGreenPlayer);
+    document.querySelector("#player-yellow").addEventListener("click", selectYellowPlayer);
+    document.querySelector("#player-blue").addEventListener("click", selectBluePlayer);
+
+    document.querySelector("#ai-red").addEventListener("click", selectRedAI);
+    document.querySelector("#ai-green").addEventListener("click", selectGreenAI);
+    document.querySelector("#ai-yellow").addEventListener("click", selectYellowAI);
+    document.querySelector("#ai-blue").addEventListener("click", selectBlueAI);
+
+    document.querySelector("#deselect-red").addEventListener("click", deselectRed);
+    document.querySelector("#deselect-green").addEventListener("click", deselectGreen);
+    document.querySelector("#deselect-yellow").addEventListener("click", deselectYellow);
+    document.querySelector("#deselect-blue").addEventListener("click", deselectBlue);
+
+
     document.querySelector("#start").addEventListener("click", startGame);
   }
 
@@ -62,38 +74,110 @@ namespace Malefiz {
     viewport.draw();
   }
 
-  function selectRed(): void {
-    handlePlayerSelection(TYPE.PLAYER_RED);
+  function selectRedPlayer(_event: any): void {
+    console.log(_event.target.id);
+    handlePlayerSelection(TYPE.PLAYER_RED, true);
   }
 
-  function selectGreen(): void {
-    handlePlayerSelection(TYPE.PLAYER_GREEN);
+  function selectGreenPlayer(_event: any): void {
+    handlePlayerSelection(TYPE.PLAYER_GREEN, true);
   }
 
-  function selectYellow(): void {
-    handlePlayerSelection(TYPE.PLAYER_YELLOW);
+  function selectYellowPlayer(_event: any): void {
+    handlePlayerSelection(TYPE.PLAYER_YELLOW, true);
   }
 
-  function selectBlue(): void {
-    handlePlayerSelection(TYPE.PLAYER_BLUE);
+  function selectBluePlayer(_event: any): void {
+    handlePlayerSelection(TYPE.PLAYER_BLUE, true);
   }
 
-  function handlePlayerSelection(_type: TYPE) {
-    let isSelected: boolean = false;
+  function selectRedAI(_event: any): void {
+    handlePlayerSelection(TYPE.PLAYER_RED, false);
+  }
+
+  function selectGreenAI(_event: any): void {
+    handlePlayerSelection(TYPE.PLAYER_GREEN, false);
+  }
+
+  function selectYellowAI(_event: any): void {
+    handlePlayerSelection(TYPE.PLAYER_YELLOW, false);
+  }
+
+  function selectBlueAI(_event: any): void {
+    handlePlayerSelection(TYPE.PLAYER_BLUE, false);
+  }
+
+  function deselectRed(_event: any): void {
+    handlePlayerDeselection(TYPE.PLAYER_RED);
+  }
+
+  function deselectGreen(_event: any): void {
+    handlePlayerDeselection(TYPE.PLAYER_GREEN);
+  }
+
+  function deselectYellow(_event: any): void {
+    handlePlayerDeselection(TYPE.PLAYER_YELLOW);
+  }
+
+  function deselectBlue(_event: any): void {
+    handlePlayerDeselection(TYPE.PLAYER_BLUE);
+  }
+
+  function handlePlayerDeselection(_type: TYPE): void {
+    let selectId: string;
+    switch (_type) {
+      case TYPE.PLAYER_RED:
+        selectId = "red";
+        break;
+      case TYPE.PLAYER_GREEN:
+        selectId = "green";
+        break;
+      case TYPE.PLAYER_YELLOW:
+        selectId = "yellow";
+        break;
+      case TYPE.PLAYER_BLUE:
+        selectId = "blue";
+        break;
+    }
+
     for (let i: number = 0; i < players.length; i++) {
       if (players[i].color === typeToColorMap.get(_type)) {
-        isSelected = true; 
         players[i].removeTokens();
         players.splice(i, 1);
       }
     }
-    if (!isSelected) {
-      players.push(new HumanPlayer(_type, typeToColorMap.get(_type)));
-    }
-    drawScene();
+    document.getElementById("deselect-" + selectId).style.display = "none";
+    document.getElementById("player-" + selectId).style.display = "inline-block";
+    document.getElementById("ai-" + selectId).style.display = "inline-block";
+    viewport.draw();
   }
 
-  function drawScene(): void {
+  function handlePlayerSelection(_type: TYPE, isHuman: boolean): void {
+    if (isHuman) {
+      players.push(new HumanPlayer(_type, typeToColorMap.get(_type)));
+    } else {
+      players.push(new AIPlayer(_type, typeToColorMap.get(_type)));
+    }
+
+    let selectId: string;
+    switch (_type) {
+      case TYPE.PLAYER_RED:
+        selectId = "red";
+        break;
+      case TYPE.PLAYER_GREEN:
+        selectId = "green";
+        break;
+      case TYPE.PLAYER_YELLOW:
+        selectId = "yellow";
+        break;
+      case TYPE.PLAYER_BLUE:
+        selectId = "blue";
+        break;
+    }
+    document.getElementById("deselect-" + selectId).style.display = "inline-block";
+    document.getElementById("player-" + selectId).style.display = "none";
+    document.getElementById("ai-" + selectId).style.display = "none";
+
     viewport.draw();
   }
 }

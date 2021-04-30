@@ -2,20 +2,30 @@
 
 namespace Malefiz {
   export class AIPlayer extends Player {
-    public pickToken(_event: ƒ.EventPointer, diceValue: number): boolean {
-      return true;
-    }
+    private newField: Field;
 
     public setBarrier(): boolean {
-      throw new Error("Method not implemented.");
+      
+      return true;
     }
     
     public moveToken(_event: ƒ.EventPointer): INSTRUCTION {
+      this.placeSelectedTokenAtField(this.newField);
       return INSTRUCTION.NEXT_TURN;
     }
 
-    public moveBarrier(_event: ƒ.EventPointer): void {
-
+    public pickToken(_event: ƒ.EventPointer, diceValue: number): boolean {
+      for (let token of this.tokens.getChildren() as Token[]) {
+        let adjacentFields: Field[] = [];
+        Graph.findNodesWithDistanceToNode(graph.nodes.get(token.field), diceValue, adjacentFields)
+        if (adjacentFields) {
+          this.selectedToken = token;
+          this.newField = adjacentFields[0];
+        }
+      }
+      return true;
     }
+
+    public moveBarrier(_event: ƒ.EventPointer): void {}
   }
 }

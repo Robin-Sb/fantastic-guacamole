@@ -2,7 +2,6 @@
 
 namespace Malefiz {
   export class HumanPlayer extends Player {
-    private selectedToken: Token = null;
     private moveableBarrier: Token = null;
 
     constructor(_type: TYPE, _color: COLOR) {
@@ -60,7 +59,7 @@ namespace Malefiz {
 
         if (proceedToNextStage)
           nextInstruction = INSTRUCTION.NEXT_TURN;
-        this.placeSelectedTokenAtField(selectedField);
+        this.placeSelectedTokenAtField(graph.nodes.get(selectedField.field));
       }  
 
       viewport.getBranch().getChildrenByName("PossibleMoves")[0].removeAllChildren();
@@ -130,14 +129,7 @@ namespace Malefiz {
         }
       }
     }
-   
-    private placeSelectedTokenAtField(fieldToPlace: DisplayedField) {
-      graph.nodes.get(this.selectedToken.field).token = null;
-      this.selectedToken.field = fieldToPlace.field;
-      graph.nodes.get(fieldToPlace.field).token = this.selectedToken;
-      this.selectedToken.mtxLocal.translation = fieldToPlace.mtxLocal.translation;
-    }
-
+  
     private prepareBarrierMove(selectedField: Field): boolean {
       if (selectedField.token?.type === TYPE.BARRIER) {
         this.moveableBarrier = selectedField.token;

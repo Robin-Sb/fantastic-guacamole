@@ -4,6 +4,7 @@ var Malefiz;
     class Player {
         constructor(_type, _color) {
             this.colorToCSSMap = new Map([[Malefiz.COLOR.RED, ƒ.Color.CSS("red")], [Malefiz.COLOR.GREEN, ƒ.Color.CSS("LawnGreen")], [Malefiz.COLOR.YELLOW, ƒ.Color.CSS("yellow")], [Malefiz.COLOR.BLUE, ƒ.Color.CSS("DeepSkyBlue")]]);
+            this.selectedToken = null;
             this.color = _color;
             this.#tokens = new ƒ.Node("Token" + _color);
             Malefiz.viewport.getBranch().addChild(this.#tokens);
@@ -37,6 +38,12 @@ var Malefiz;
                     return "Red";
             }
         }
+        placeSelectedTokenAtField(fieldToPlace) {
+            Malefiz.graph.nodes.get(this.selectedToken.field).token = null;
+            this.selectedToken.field = fieldToPlace.label;
+            fieldToPlace.token = this.selectedToken;
+            this.selectedToken.mtxLocal.translation = fieldToPlace.mtxLocal.translation;
+        }
     }
     Malefiz.Player = Player;
 })(Malefiz || (Malefiz = {}));
@@ -45,17 +52,25 @@ var Malefiz;
 /// <reference path="Player.ts" />
 (function (Malefiz) {
     class AIPlayer extends Malefiz.Player {
-        pickToken(_event, diceValue) {
+        setBarrier() {
             return true;
         }
-        setBarrier() {
-            throw new Error("Method not implemented.");
-        }
         moveToken(_event) {
+            this.placeSelectedTokenAtField(this.newField);
             return Malefiz.INSTRUCTION.NEXT_TURN;
         }
-        moveBarrier(_event) {
+        pickToken(_event, diceValue) {
+            for (let token of this.tokens.getChildren()) {
+                let adjacentFields = [];
+                Malefiz.Graph.findNodesWithDistanceToNode(Malefiz.graph.nodes.get(token.field), diceValue, adjacentFields);
+                if (adjacentFields) {
+                    this.selectedToken = token;
+                    this.newField = adjacentFields[0];
+                }
+            }
+            return true;
         }
+        moveBarrier(_event) { }
     }
     Malefiz.AIPlayer = AIPlayer;
 })(Malefiz || (Malefiz = {}));
@@ -272,7 +287,6 @@ var Malefiz;
     class HumanPlayer extends Malefiz.Player {
         constructor(_type, _color) {
             super(_type, _color);
-            this.selectedToken = null;
             this.moveableBarrier = null;
             this.moveBarrier = (_event) => {
                 let ray = Malefiz.viewport.getRayFromClient(new ƒ.Vector2(_event.canvasX, _event.canvasY));
@@ -325,7 +339,7 @@ var Malefiz;
                 }
                 if (proceedToNextStage)
                     nextInstruction = Malefiz.INSTRUCTION.NEXT_TURN;
-                this.placeSelectedTokenAtField(selectedField);
+                this.placeSelectedTokenAtField(Malefiz.graph.nodes.get(selectedField.field));
             }
             Malefiz.viewport.getBranch().getChildrenByName("PossibleMoves")[0].removeAllChildren();
             return nextInstruction;
@@ -380,12 +394,6 @@ var Malefiz;
                 }
             }
         }
-        placeSelectedTokenAtField(fieldToPlace) {
-            Malefiz.graph.nodes.get(this.selectedToken.field).token = null;
-            this.selectedToken.field = fieldToPlace.field;
-            Malefiz.graph.nodes.get(fieldToPlace.field).token = this.selectedToken;
-            this.selectedToken.mtxLocal.translation = fieldToPlace.mtxLocal.translation;
-        }
         prepareBarrierMove(selectedField) {
             if (selectedField.token?.type === Malefiz.TYPE.BARRIER) {
                 this.moveableBarrier = selectedField.token;
@@ -431,10 +439,18 @@ var Malefiz;
         Malefiz.viewport.draw();
     }
     function addButtonEventListeners() {
-        document.querySelector("#select-red").addEventListener("click", selectRed);
-        document.querySelector("#select-green").addEventListener("click", selectGreen);
-        document.querySelector("#select-yellow").addEventListener("click", selectYellow);
-        document.querySelector("#select-blue").addEventListener("click", selectBlue);
+        document.querySelector("#player-red").addEventListener("click", selectRedPlayer);
+        document.querySelector("#player-green").addEventListener("click", selectGreenPlayer);
+        document.querySelector("#player-yellow").addEventListener("click", selectYellowPlayer);
+        document.querySelector("#player-blue").addEventListener("click", selectBluePlayer);
+        document.querySelector("#ai-red").addEventListener("click", selectRedAI);
+        document.querySelector("#ai-green").addEventListener("click", selectGreenAI);
+        document.querySelector("#ai-yellow").addEventListener("click", selectYellowAI);
+        document.querySelector("#ai-blue").addEventListener("click", selectBlueAI);
+        document.querySelector("#deselect-red").addEventListener("click", deselectRed);
+        document.querySelector("#deselect-green").addEventListener("click", deselectGreen);
+        document.querySelector("#deselect-yellow").addEventListener("click", deselectYellow);
+        document.querySelector("#deselect-blue").addEventListener("click", deselectBlue);
         document.querySelector("#start").addEventListener("click", startGame);
     }
     function startGame() {
@@ -449,33 +465,95 @@ var Malefiz;
         new Malefiz.PlayerController(players);
         Malefiz.viewport.draw();
     }
-    function selectRed() {
-        handlePlayerSelection(Malefiz.TYPE.PLAYER_RED);
+    function selectRedPlayer(_event) {
+        console.log(_event.target.id);
+        handlePlayerSelection(Malefiz.TYPE.PLAYER_RED, true);
     }
-    function selectGreen() {
-        handlePlayerSelection(Malefiz.TYPE.PLAYER_GREEN);
+    function selectGreenPlayer(_event) {
+        handlePlayerSelection(Malefiz.TYPE.PLAYER_GREEN, true);
     }
-    function selectYellow() {
-        handlePlayerSelection(Malefiz.TYPE.PLAYER_YELLOW);
+    function selectYellowPlayer(_event) {
+        handlePlayerSelection(Malefiz.TYPE.PLAYER_YELLOW, true);
     }
-    function selectBlue() {
-        handlePlayerSelection(Malefiz.TYPE.PLAYER_BLUE);
+    function selectBluePlayer(_event) {
+        handlePlayerSelection(Malefiz.TYPE.PLAYER_BLUE, true);
     }
-    function handlePlayerSelection(_type) {
-        let isSelected = false;
+    function selectRedAI(_event) {
+        handlePlayerSelection(Malefiz.TYPE.PLAYER_RED, false);
+    }
+    function selectGreenAI(_event) {
+        handlePlayerSelection(Malefiz.TYPE.PLAYER_GREEN, false);
+    }
+    function selectYellowAI(_event) {
+        handlePlayerSelection(Malefiz.TYPE.PLAYER_YELLOW, false);
+    }
+    function selectBlueAI(_event) {
+        handlePlayerSelection(Malefiz.TYPE.PLAYER_BLUE, false);
+    }
+    function deselectRed(_event) {
+        handlePlayerDeselection(Malefiz.TYPE.PLAYER_RED);
+    }
+    function deselectGreen(_event) {
+        handlePlayerDeselection(Malefiz.TYPE.PLAYER_GREEN);
+    }
+    function deselectYellow(_event) {
+        handlePlayerDeselection(Malefiz.TYPE.PLAYER_YELLOW);
+    }
+    function deselectBlue(_event) {
+        handlePlayerDeselection(Malefiz.TYPE.PLAYER_BLUE);
+    }
+    function handlePlayerDeselection(_type) {
+        let selectId;
+        switch (_type) {
+            case Malefiz.TYPE.PLAYER_RED:
+                selectId = "red";
+                break;
+            case Malefiz.TYPE.PLAYER_GREEN:
+                selectId = "green";
+                break;
+            case Malefiz.TYPE.PLAYER_YELLOW:
+                selectId = "yellow";
+                break;
+            case Malefiz.TYPE.PLAYER_BLUE:
+                selectId = "blue";
+                break;
+        }
         for (let i = 0; i < players.length; i++) {
             if (players[i].color === Malefiz.typeToColorMap.get(_type)) {
-                isSelected = true;
                 players[i].removeTokens();
                 players.splice(i, 1);
             }
         }
-        if (!isSelected) {
+        document.getElementById("deselect-" + selectId).style.display = "none";
+        document.getElementById("player-" + selectId).style.display = "inline-block";
+        document.getElementById("ai-" + selectId).style.display = "inline-block";
+        Malefiz.viewport.draw();
+    }
+    function handlePlayerSelection(_type, isHuman) {
+        if (isHuman) {
             players.push(new Malefiz.HumanPlayer(_type, Malefiz.typeToColorMap.get(_type)));
         }
-        drawScene();
-    }
-    function drawScene() {
+        else {
+            players.push(new Malefiz.AIPlayer(_type, Malefiz.typeToColorMap.get(_type)));
+        }
+        let selectId;
+        switch (_type) {
+            case Malefiz.TYPE.PLAYER_RED:
+                selectId = "red";
+                break;
+            case Malefiz.TYPE.PLAYER_GREEN:
+                selectId = "green";
+                break;
+            case Malefiz.TYPE.PLAYER_YELLOW:
+                selectId = "yellow";
+                break;
+            case Malefiz.TYPE.PLAYER_BLUE:
+                selectId = "blue";
+                break;
+        }
+        document.getElementById("deselect-" + selectId).style.display = "inline-block";
+        document.getElementById("player-" + selectId).style.display = "none";
+        document.getElementById("ai-" + selectId).style.display = "none";
         Malefiz.viewport.draw();
     }
 })(Malefiz || (Malefiz = {}));
@@ -646,130 +724,59 @@ var Malefiz;
             SceneBuilder.addStandardTokens();
         }
         static addNodes() {
-            Malefiz.graph.insertNode("-1|-5", normNodePosition(new ƒ.Vector2(-1, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-2|-5", normNodePosition(new ƒ.Vector2(-2, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-3|-5", normNodePosition(new ƒ.Vector2(-3, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-4|-5", normNodePosition(new ƒ.Vector2(-4, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-5|-5", normNodePosition(new ƒ.Vector2(-5, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-6|-5", normNodePosition(new ƒ.Vector2(-6, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-7|-5", normNodePosition(new ƒ.Vector2(-7, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-8|-5", normNodePosition(new ƒ.Vector2(-8, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("0|-5", normNodePosition(new ƒ.Vector2(0, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("1|-5", normNodePosition(new ƒ.Vector2(1, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("2|-5", normNodePosition(new ƒ.Vector2(2, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("3|-5", normNodePosition(new ƒ.Vector2(3, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("4|-5", normNodePosition(new ƒ.Vector2(4, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("5|-5", normNodePosition(new ƒ.Vector2(5, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("6|-5", normNodePosition(new ƒ.Vector2(6, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("7|-5", normNodePosition(new ƒ.Vector2(7, -5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("8|-5", normNodePosition(new ƒ.Vector2(8, -5)), ƒ.Color.CSS("black"));
+            // first row
+            for (let i = -8; i <= 8; i++) {
+                Malefiz.graph.insertNode(i.toString() + "|-5", normNodePosition(new ƒ.Vector2(i, -5)), ƒ.Color.CSS("black"));
+            }
             // second row (middle row)
-            Malefiz.graph.insertNode("-8|-4", normNodePosition(new ƒ.Vector2(-8, -4)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-4|-4", normNodePosition(new ƒ.Vector2(-4, -4)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("0|-4", normNodePosition(new ƒ.Vector2(0, -4)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("4|-4", normNodePosition(new ƒ.Vector2(4, -4)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("8|-4", normNodePosition(new ƒ.Vector2(8, -4)), ƒ.Color.CSS("black"));
+            for (let i = -8; i <= 8; i += 4) {
+                Malefiz.graph.insertNode(i.toString() + "|-4", normNodePosition(new ƒ.Vector2(i, -4)), ƒ.Color.CSS("black"));
+            }
             // third row
-            Malefiz.graph.insertNode("-8|-3", normNodePosition(new ƒ.Vector2(-8, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-7|-3", normNodePosition(new ƒ.Vector2(-7, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-6|-3", normNodePosition(new ƒ.Vector2(-6, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-5|-3", normNodePosition(new ƒ.Vector2(-5, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-4|-3", normNodePosition(new ƒ.Vector2(-4, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-3|-3", normNodePosition(new ƒ.Vector2(-3, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-2|-3", normNodePosition(new ƒ.Vector2(-2, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-1|-3", normNodePosition(new ƒ.Vector2(-1, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("0|-3", normNodePosition(new ƒ.Vector2(0, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("1|-3", normNodePosition(new ƒ.Vector2(1, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("2|-3", normNodePosition(new ƒ.Vector2(2, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("3|-3", normNodePosition(new ƒ.Vector2(3, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("4|-3", normNodePosition(new ƒ.Vector2(4, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("5|-3", normNodePosition(new ƒ.Vector2(5, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("6|-3", normNodePosition(new ƒ.Vector2(6, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("7|-3", normNodePosition(new ƒ.Vector2(7, -3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("8|-3", normNodePosition(new ƒ.Vector2(8, -3)), ƒ.Color.CSS("black"));
-            // third row (middle row)
-            Malefiz.graph.insertNode("-6|-2", normNodePosition(new ƒ.Vector2(-6, -2)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-2|-2", normNodePosition(new ƒ.Vector2(-2, -2)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("2|-2", normNodePosition(new ƒ.Vector2(2, -2)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("6|-2", normNodePosition(new ƒ.Vector2(6, -2)), ƒ.Color.CSS("black"));
-            // forth row
-            Malefiz.graph.insertNode("-6|-1", normNodePosition(new ƒ.Vector2(-6, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-5|-1", normNodePosition(new ƒ.Vector2(-5, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-4|-1", normNodePosition(new ƒ.Vector2(-4, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-3|-1", normNodePosition(new ƒ.Vector2(-3, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-2|-1", normNodePosition(new ƒ.Vector2(-2, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-1|-1", normNodePosition(new ƒ.Vector2(-1, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("0|-1", normNodePosition(new ƒ.Vector2(0, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("1|-1", normNodePosition(new ƒ.Vector2(1, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("2|-1", normNodePosition(new ƒ.Vector2(2, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("3|-1", normNodePosition(new ƒ.Vector2(3, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("4|-1", normNodePosition(new ƒ.Vector2(4, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("5|-1", normNodePosition(new ƒ.Vector2(5, -1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("6|-1", normNodePosition(new ƒ.Vector2(6, -1)), ƒ.Color.CSS("black"));
-            -
-            // fifth row (middle row)
+            for (let i = -8; i <= 8; i++) {
+                Malefiz.graph.insertNode(i.toString() + "|-3", normNodePosition(new ƒ.Vector2(i, -3)), ƒ.Color.CSS("black"));
+            }
+            // forth row (middle row)
+            for (let i = -6; i <= 6; i += 4) {
+                Malefiz.graph.insertNode(i.toString() + "|-2", normNodePosition(new ƒ.Vector2(i, -2)), ƒ.Color.CSS("black"));
+            }
+            // fifth row
+            for (let i = -6; i <= 6; i++) {
+                Malefiz.graph.insertNode(i.toString() + "|-1", normNodePosition(new ƒ.Vector2(i, -1)), ƒ.Color.CSS("black"));
+            }
+            // sixth row (middle row)
+            for (let i = -4; i <= 4; i += 8) {
+                Malefiz.graph.insertNode(i.toString() + "|0", normNodePosition(new ƒ.Vector2(i, 0)), ƒ.Color.CSS("black"));
+            }
+            // seventh row
             Malefiz.graph.insertNode("-4|0", normNodePosition(new ƒ.Vector2(-4, 0)), ƒ.Color.CSS("black"));
             Malefiz.graph.insertNode("4|0", normNodePosition(new ƒ.Vector2(4, 0)), ƒ.Color.CSS("black"));
-            // sisth row (middle row)
-            Malefiz.graph.insertNode("-4|1", normNodePosition(new ƒ.Vector2(-4, 1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-3|1", normNodePosition(new ƒ.Vector2(-3, 1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-2|1", normNodePosition(new ƒ.Vector2(-2, 1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-1|1", normNodePosition(new ƒ.Vector2(-1, 1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("0|1", normNodePosition(new ƒ.Vector2(0, 1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("1|1", normNodePosition(new ƒ.Vector2(1, 1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("2|1", normNodePosition(new ƒ.Vector2(2, 1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("3|1", normNodePosition(new ƒ.Vector2(3, 1)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("4|1", normNodePosition(new ƒ.Vector2(4, 1)), ƒ.Color.CSS("black"));
-            // seventh row (middle row)
-            Malefiz.graph.insertNode("-2|2", normNodePosition(new ƒ.Vector2(-2, 2)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("2|2", normNodePosition(new ƒ.Vector2(2, 2)), ƒ.Color.CSS("black"));
             // eigth row
-            Malefiz.graph.insertNode("-2|3", normNodePosition(new ƒ.Vector2(-2, 3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-1|3", normNodePosition(new ƒ.Vector2(-1, 3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("0|3", normNodePosition(new ƒ.Vector2(0, 3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("1|3", normNodePosition(new ƒ.Vector2(1, 3)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("2|3", normNodePosition(new ƒ.Vector2(2, 3)), ƒ.Color.CSS("black"));
-            // ninth row
-            Malefiz.graph.insertNode("0|4", normNodePosition(new ƒ.Vector2(0, 4)), ƒ.Color.CSS("black"));
+            for (let i = -4; i <= 4; i++) {
+                Malefiz.graph.insertNode(i.toString() + "|1", normNodePosition(new ƒ.Vector2(i, 1)), ƒ.Color.CSS("black"));
+            }
+            // ninth row (middle row)
+            for (let i = -2; i <= 2; i += 4) {
+                Malefiz.graph.insertNode(i.toString() + "|2", normNodePosition(new ƒ.Vector2(i, 2)), ƒ.Color.CSS("black"));
+            }
             // tenth row
-            Malefiz.graph.insertNode("-8|5", normNodePosition(new ƒ.Vector2(-8, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-7|5", normNodePosition(new ƒ.Vector2(-7, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-6|5", normNodePosition(new ƒ.Vector2(-6, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-5|5", normNodePosition(new ƒ.Vector2(-5, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-4|5", normNodePosition(new ƒ.Vector2(-4, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-3|5", normNodePosition(new ƒ.Vector2(-3, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-2|5", normNodePosition(new ƒ.Vector2(-2, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-1|5", normNodePosition(new ƒ.Vector2(-1, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("0|5", normNodePosition(new ƒ.Vector2(0, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("1|5", normNodePosition(new ƒ.Vector2(1, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("2|5", normNodePosition(new ƒ.Vector2(2, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("3|5", normNodePosition(new ƒ.Vector2(3, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("4|5", normNodePosition(new ƒ.Vector2(4, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("5|5", normNodePosition(new ƒ.Vector2(5, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("6|5", normNodePosition(new ƒ.Vector2(6, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("7|5", normNodePosition(new ƒ.Vector2(7, 5)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("8|5", normNodePosition(new ƒ.Vector2(8, 5)), ƒ.Color.CSS("black"));
-            // eleventh row
-            Malefiz.graph.insertNode("-8|6", normNodePosition(new ƒ.Vector2(-8, 6)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("8|6", normNodePosition(new ƒ.Vector2(8, 6)), ƒ.Color.CSS("black"));
+            for (let i = -2; i <= 2; i++) {
+                Malefiz.graph.insertNode(i.toString() + "|3", normNodePosition(new ƒ.Vector2(i, 3)), ƒ.Color.CSS("black"));
+            }
+            // eleventh row (single node)
+            Malefiz.graph.insertNode("0|4", normNodePosition(new ƒ.Vector2(0, 4)), ƒ.Color.CSS("black"));
             // twelth row
-            Malefiz.graph.insertNode("-8|7", normNodePosition(new ƒ.Vector2(-8, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-7|7", normNodePosition(new ƒ.Vector2(-7, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-6|7", normNodePosition(new ƒ.Vector2(-6, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-5|7", normNodePosition(new ƒ.Vector2(-5, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-4|7", normNodePosition(new ƒ.Vector2(-4, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-3|7", normNodePosition(new ƒ.Vector2(-3, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-2|7", normNodePosition(new ƒ.Vector2(-2, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("-1|7", normNodePosition(new ƒ.Vector2(-1, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("0|7", normNodePosition(new ƒ.Vector2(0, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("1|7", normNodePosition(new ƒ.Vector2(1, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("2|7", normNodePosition(new ƒ.Vector2(2, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("3|7", normNodePosition(new ƒ.Vector2(3, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("4|7", normNodePosition(new ƒ.Vector2(4, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("5|7", normNodePosition(new ƒ.Vector2(5, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("6|7", normNodePosition(new ƒ.Vector2(6, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("7|7", normNodePosition(new ƒ.Vector2(7, 7)), ƒ.Color.CSS("black"));
-            Malefiz.graph.insertNode("8|7", normNodePosition(new ƒ.Vector2(8, 7)), ƒ.Color.CSS("black"));
+            for (let i = -8; i <= 8; i++) {
+                Malefiz.graph.insertNode(i.toString() + "|5", normNodePosition(new ƒ.Vector2(i, 5)), ƒ.Color.CSS("black"));
+            }
+            // thirteenth row
+            for (let i = -8; i <= 8; i += 16) {
+                Malefiz.graph.insertNode(i.toString() + "|6", normNodePosition(new ƒ.Vector2(i, 6)), ƒ.Color.CSS("black"));
+            }
+            // fourteenth row
+            for (let i = -8; i <= 8; i++) {
+                Malefiz.graph.insertNode(i.toString() + "|7", normNodePosition(new ƒ.Vector2(i, 7)), ƒ.Color.CSS("black"));
+            }
             // top, finish line
             Malefiz.graph.insertNode("0|8", normNodePosition(new ƒ.Vector2(0, 8)), ƒ.Color.CSS("black"));
             Malefiz.graph.insertNode("SR1", normNodePosition(new ƒ.Vector2(-6.5, -6)), ƒ.Color.CSS("DarkRed"));

@@ -13,141 +13,73 @@ namespace Malefiz {
     }
 
     private static addNodes(): void {
-      graph.insertNode("-1|-5", normNodePosition(new ƒ.Vector2(-1, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-2|-5", normNodePosition(new ƒ.Vector2(-2, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-3|-5", normNodePosition(new ƒ.Vector2(-3, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-4|-5", normNodePosition(new ƒ.Vector2(-4, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-5|-5", normNodePosition(new ƒ.Vector2(-5, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-6|-5", normNodePosition(new ƒ.Vector2(-6, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-7|-5", normNodePosition(new ƒ.Vector2(-7, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-8|-5", normNodePosition(new ƒ.Vector2(-8, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "0|-5", normNodePosition(new ƒ.Vector2( 0, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "1|-5", normNodePosition(new ƒ.Vector2( 1, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "2|-5", normNodePosition(new ƒ.Vector2( 2, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "3|-5", normNodePosition(new ƒ.Vector2( 3, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "4|-5", normNodePosition(new ƒ.Vector2( 4, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "5|-5", normNodePosition(new ƒ.Vector2( 5, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "6|-5", normNodePosition(new ƒ.Vector2( 6, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "7|-5", normNodePosition(new ƒ.Vector2( 7, -5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "8|-5", normNodePosition(new ƒ.Vector2( 8, -5)), ƒ.Color.CSS("black"));
-  
+      // first row
+      for (let i: number = -8; i <= 8; i++) {
+        graph.insertNode(i.toString() + "|-5", normNodePosition(new ƒ.Vector2(i, -5)), ƒ.Color.CSS("black"));
+      }  
+
       // second row (middle row)
-      graph.insertNode("-8|-4", normNodePosition(new ƒ.Vector2(-8, -4)), ƒ.Color.CSS("black"));
-      graph.insertNode("-4|-4", normNodePosition(new ƒ.Vector2(-4, -4)), ƒ.Color.CSS("black"));
-      graph.insertNode( "0|-4", normNodePosition(new ƒ.Vector2( 0, -4)), ƒ.Color.CSS("black"));
-      graph.insertNode( "4|-4", normNodePosition(new ƒ.Vector2( 4, -4)), ƒ.Color.CSS("black"));
-      graph.insertNode( "8|-4", normNodePosition(new ƒ.Vector2( 8, -4)), ƒ.Color.CSS("black"));
+      for (let i: number = -8; i <= 8; i +=4) {
+        graph.insertNode(i.toString() + "|-4", normNodePosition(new ƒ.Vector2(i, -4)), ƒ.Color.CSS("black"));
+      }
   
       // third row
-      graph.insertNode("-8|-3", normNodePosition(new ƒ.Vector2(-8, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode("-7|-3", normNodePosition(new ƒ.Vector2(-7, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode("-6|-3", normNodePosition(new ƒ.Vector2(-6, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode("-5|-3", normNodePosition(new ƒ.Vector2(-5, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode("-4|-3", normNodePosition(new ƒ.Vector2(-4, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode("-3|-3", normNodePosition(new ƒ.Vector2(-3, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode("-2|-3", normNodePosition(new ƒ.Vector2(-2, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode("-1|-3", normNodePosition(new ƒ.Vector2(-1, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "0|-3", normNodePosition(new ƒ.Vector2( 0, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "1|-3", normNodePosition(new ƒ.Vector2( 1, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "2|-3", normNodePosition(new ƒ.Vector2( 2, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "3|-3", normNodePosition(new ƒ.Vector2( 3, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "4|-3", normNodePosition(new ƒ.Vector2( 4, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "5|-3", normNodePosition(new ƒ.Vector2( 5, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "6|-3", normNodePosition(new ƒ.Vector2( 6, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "7|-3", normNodePosition(new ƒ.Vector2( 7, -3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "8|-3", normNodePosition(new ƒ.Vector2( 8, -3)), ƒ.Color.CSS("black"));
+      for (let i: number = -8; i <= 8; i++) {
+        graph.insertNode(i.toString() + "|-3", normNodePosition(new ƒ.Vector2(i, -3)), ƒ.Color.CSS("black"));
+      }
   
-      // third row (middle row)
-      graph.insertNode("-6|-2", normNodePosition(new ƒ.Vector2(-6, -2)), ƒ.Color.CSS("black"));
-      graph.insertNode("-2|-2", normNodePosition(new ƒ.Vector2(-2, -2)), ƒ.Color.CSS("black"));
-      graph.insertNode( "2|-2", normNodePosition(new ƒ.Vector2( 2, -2)), ƒ.Color.CSS("black"));
-      graph.insertNode( "6|-2", normNodePosition(new ƒ.Vector2( 6, -2)), ƒ.Color.CSS("black"));
-  
-      // forth row
-      graph.insertNode("-6|-1", normNodePosition(new ƒ.Vector2(-6,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode("-5|-1", normNodePosition(new ƒ.Vector2(-5,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode("-4|-1", normNodePosition(new ƒ.Vector2(-4,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode("-3|-1", normNodePosition(new ƒ.Vector2(-3,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode("-2|-1", normNodePosition(new ƒ.Vector2(-2,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode("-1|-1", normNodePosition(new ƒ.Vector2(-1,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "0|-1", normNodePosition(new ƒ.Vector2( 0,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "1|-1", normNodePosition(new ƒ.Vector2( 1,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "2|-1", normNodePosition(new ƒ.Vector2( 2,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "3|-1", normNodePosition(new ƒ.Vector2( 3,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "4|-1", normNodePosition(new ƒ.Vector2( 4,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "5|-1", normNodePosition(new ƒ.Vector2( 5,-1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "6|-1", normNodePosition(new ƒ.Vector2( 6,-1)), ƒ.Color.CSS("black"));-
-      // fifth row (middle row)
+      // forth row (middle row)
+      for (let i: number = -6; i <= 6; i +=4) {
+        graph.insertNode(i.toString() + "|-2", normNodePosition(new ƒ.Vector2(i, -2)), ƒ.Color.CSS("black"));
+      }
+
+      // fifth row
+      for (let i: number = -6; i <= 6; i++) {
+        graph.insertNode(i.toString() + "|-1", normNodePosition(new ƒ.Vector2(i, -1)), ƒ.Color.CSS("black"));
+      }
+
+      // sixth row (middle row)
+      for (let i: number = -4; i <= 4; i += 8) {
+        graph.insertNode(i.toString() + "|0", normNodePosition(new ƒ.Vector2(i, 0)), ƒ.Color.CSS("black"));
+      }
+
+      // seventh row
       graph.insertNode("-4|0", normNodePosition(new ƒ.Vector2(-4, 0)), ƒ.Color.CSS("black"));
       graph.insertNode( "4|0", normNodePosition(new ƒ.Vector2( 4, 0)), ƒ.Color.CSS("black"));
-  
-      // sisth row (middle row)
-      graph.insertNode("-4|1", normNodePosition(new ƒ.Vector2(-4, 1)), ƒ.Color.CSS("black"));
-      graph.insertNode("-3|1", normNodePosition(new ƒ.Vector2(-3, 1)), ƒ.Color.CSS("black"));
-      graph.insertNode("-2|1", normNodePosition(new ƒ.Vector2(-2, 1)), ƒ.Color.CSS("black"));
-      graph.insertNode("-1|1", normNodePosition(new ƒ.Vector2(-1, 1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "0|1", normNodePosition(new ƒ.Vector2( 0, 1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "1|1", normNodePosition(new ƒ.Vector2( 1, 1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "2|1", normNodePosition(new ƒ.Vector2( 2, 1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "3|1", normNodePosition(new ƒ.Vector2( 3, 1)), ƒ.Color.CSS("black"));
-      graph.insertNode( "4|1", normNodePosition(new ƒ.Vector2( 4, 1)), ƒ.Color.CSS("black"));
-   
-      // seventh row (middle row)
-      graph.insertNode("-2|2", normNodePosition(new ƒ.Vector2(-2, 2)), ƒ.Color.CSS("black"));
-      graph.insertNode( "2|2", normNodePosition(new ƒ.Vector2( 2, 2)), ƒ.Color.CSS("black"));
-  
+      
       // eigth row
-      graph.insertNode("-2|3", normNodePosition(new ƒ.Vector2(-2, 3)), ƒ.Color.CSS("black"));
-      graph.insertNode("-1|3", normNodePosition(new ƒ.Vector2(-1, 3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "0|3", normNodePosition(new ƒ.Vector2( 0, 3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "1|3", normNodePosition(new ƒ.Vector2( 1, 3)), ƒ.Color.CSS("black"));
-      graph.insertNode( "2|3", normNodePosition(new ƒ.Vector2( 2, 3)), ƒ.Color.CSS("black"));
-  
-      // ninth row
-      graph.insertNode("0|4", normNodePosition(new ƒ.Vector2(0, 4)), ƒ.Color.CSS("black"));
-  
+      for (let i: number = -4; i <= 4; i++) {
+        graph.insertNode(i.toString() + "|1", normNodePosition(new ƒ.Vector2(i, 1)), ƒ.Color.CSS("black"));
+      }
+
+      // ninth row (middle row)
+      for (let i: number = -2; i <= 2; i += 4) {
+        graph.insertNode(i.toString() + "|2", normNodePosition(new ƒ.Vector2(i, 2)), ƒ.Color.CSS("black"));
+      }
+
       // tenth row
-      graph.insertNode("-8|5", normNodePosition(new ƒ.Vector2(-8, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-7|5", normNodePosition(new ƒ.Vector2(-7, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-6|5", normNodePosition(new ƒ.Vector2(-6, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-5|5", normNodePosition(new ƒ.Vector2(-5, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-4|5", normNodePosition(new ƒ.Vector2(-4, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-3|5", normNodePosition(new ƒ.Vector2(-3, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-2|5", normNodePosition(new ƒ.Vector2(-2, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode("-1|5", normNodePosition(new ƒ.Vector2(-1, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "0|5", normNodePosition(new ƒ.Vector2( 0, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "1|5", normNodePosition(new ƒ.Vector2( 1, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "2|5", normNodePosition(new ƒ.Vector2( 2, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "3|5", normNodePosition(new ƒ.Vector2( 3, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "4|5", normNodePosition(new ƒ.Vector2( 4, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "5|5", normNodePosition(new ƒ.Vector2( 5, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "6|5", normNodePosition(new ƒ.Vector2( 6, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "7|5", normNodePosition(new ƒ.Vector2( 7, 5)), ƒ.Color.CSS("black"));
-      graph.insertNode( "8|5", normNodePosition(new ƒ.Vector2( 8, 5)), ƒ.Color.CSS("black"));
-  
-      // eleventh row
-      graph.insertNode("-8|6", normNodePosition(new ƒ.Vector2(-8, 6)), ƒ.Color.CSS("black"));
-      graph.insertNode( "8|6", normNodePosition(new ƒ.Vector2( 8, 6)), ƒ.Color.CSS("black"));
-  
+      for (let i: number = -2; i <= 2; i++) {
+        graph.insertNode(i.toString() + "|3", normNodePosition(new ƒ.Vector2(i, 3)), ƒ.Color.CSS("black"));
+      }
+
+      // eleventh row (single node)
+      graph.insertNode("0|4", normNodePosition(new ƒ.Vector2(0, 4)), ƒ.Color.CSS("black"));
+      
       // twelth row
-      graph.insertNode("-8|7", normNodePosition(new ƒ.Vector2(-8, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode("-7|7", normNodePosition(new ƒ.Vector2(-7, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode("-6|7", normNodePosition(new ƒ.Vector2(-6, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode("-5|7", normNodePosition(new ƒ.Vector2(-5, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode("-4|7", normNodePosition(new ƒ.Vector2(-4, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode("-3|7", normNodePosition(new ƒ.Vector2(-3, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode("-2|7", normNodePosition(new ƒ.Vector2(-2, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode("-1|7", normNodePosition(new ƒ.Vector2(-1, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode( "0|7", normNodePosition(new ƒ.Vector2( 0, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode( "1|7", normNodePosition(new ƒ.Vector2( 1, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode( "2|7", normNodePosition(new ƒ.Vector2( 2, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode( "3|7", normNodePosition(new ƒ.Vector2( 3, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode( "4|7", normNodePosition(new ƒ.Vector2( 4, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode( "5|7", normNodePosition(new ƒ.Vector2( 5, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode( "6|7", normNodePosition(new ƒ.Vector2( 6, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode( "7|7", normNodePosition(new ƒ.Vector2( 7, 7)), ƒ.Color.CSS("black"));
-      graph.insertNode( "8|7", normNodePosition(new ƒ.Vector2( 8, 7)), ƒ.Color.CSS("black"));
-  
+      for (let i: number = -8; i <= 8; i++) {
+        graph.insertNode(i.toString() + "|5", normNodePosition(new ƒ.Vector2(i, 5)), ƒ.Color.CSS("black"));
+      }
+      
+      // thirteenth row
+      for (let i: number = -8; i <= 8; i += 16) {
+        graph.insertNode(i.toString() + "|6", normNodePosition(new ƒ.Vector2(i, 6)), ƒ.Color.CSS("black"));
+      }
+
+      // fourteenth row
+      for (let i: number = -8; i <= 8; i++) {
+        graph.insertNode(i.toString() + "|7", normNodePosition(new ƒ.Vector2(i, 7)), ƒ.Color.CSS("black"));
+      }
+
       // top, finish line
       graph.insertNode("0|8", normNodePosition(new ƒ.Vector2(0, 8)), ƒ.Color.CSS("black"));
   

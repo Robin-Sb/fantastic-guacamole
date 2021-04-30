@@ -28,19 +28,28 @@ button {
     bottom: 8%;
 }
 
-#select-red {
+.ai-select {
+    bottom: 6%;
+}
+
+.deselect {
+    bottom: 7%;
+    display: none;
+}
+
+.red {
     left: 32.5%;
 }
 
-#select-green {
+.green {
     left: 42.5%;
 }
 
-#select-yellow {
+.yellow {
     right: 42.5%;
 }
 
-#select-blue {
+.blue {
     right: 32.5%;
 }
 

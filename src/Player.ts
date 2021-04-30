@@ -3,6 +3,7 @@ namespace Malefiz {
     #tokens: ƒ.Node;
     public color: COLOR;
     public colorToCSSMap: Map<COLOR, ƒ.Color> = new Map([[COLOR.RED, ƒ.Color.CSS("red")], [COLOR.GREEN, ƒ.Color.CSS("LawnGreen")], [COLOR.YELLOW, ƒ.Color.CSS("yellow")], [COLOR.BLUE, ƒ.Color.CSS("DeepSkyBlue")]]);
+    protected selectedToken: Token = null;
 
     constructor(_type: TYPE, _color: COLOR) {
       this.color = _color;
@@ -46,5 +47,13 @@ namespace Malefiz {
           return "Red";
       }
     }
+
+    protected placeSelectedTokenAtField(fieldToPlace: Field) {
+      graph.nodes.get(this.selectedToken.field).token = null;
+      this.selectedToken.field = fieldToPlace.label;
+      fieldToPlace.token = this.selectedToken;
+      this.selectedToken.mtxLocal.translation = fieldToPlace.mtxLocal.translation;
+    }
+
   }
 }
