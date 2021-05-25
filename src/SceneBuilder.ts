@@ -7,8 +7,12 @@ namespace Malefiz {
         fieldRoot.addChild(field);
         SceneBuilder.insertEdges(field);
       }
-      viewport.getBranch().addChild(fieldRoot);
       SceneBuilder.insertRemainingEdges();
+      graph.dijkstraFrom("0|8");
+      for (let [label, field] of graph.nodes) {
+        console.log(label + ": " + field.distanceToFinal);
+      }
+      viewport.getBranch().addChild(fieldRoot);
       SceneBuilder.addStandardTokens();
     }
 

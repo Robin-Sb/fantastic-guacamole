@@ -5,7 +5,6 @@ namespace Malefiz {
     private newField: Field;
 
     public setBarrier(): boolean {
-      
       return true;
     }
     

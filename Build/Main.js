@@ -153,6 +153,9 @@ var Malefiz;
             face6.mtxLocal.rotateY(180);
         }
         pickDice(_event) {
+            // roll of event has no mouseclick (and thus no event), but should also roll
+            if (_event === null)
+                return true;
             let dicePicked = false;
             let picks = ƒ.Picker.pickViewport(Malefiz.viewport, new ƒ.Vector2(_event.canvasX, _event.canvasY));
             for (let pick of picks) {
@@ -228,10 +231,55 @@ var Malefiz;
             let startNode = this.nodes.get(_start);
             let endNode = this.nodes.get(_end);
             startNode.edgesOfNode.push(new Edge(endNode));
+            endNode.reverseEdgesOfNode.push(new Edge(startNode));
         }
         insertNode(_label, _position, _color) {
             let newNode = new Field(_label, _position, _color);
             this.nodes.set(_label, newNode);
+        }
+        dijkstraFrom(startNode) {
+            let fields = this.initialize(startNode);
+            this.nodes.get(startNode).distanceToFinal = 0;
+            //Graph.sortFields(fields);
+            while (fields.size != 0) {
+                let startField = Graph.findNodeWithShortestDistance(fields);
+                let startFieldWithDistance = fields.get(startField);
+                fields.delete(startField);
+                for (let edge of startField.reverseEdgesOfNode) {
+                    if (fields.has(edge.endNode)) {
+                        let altDistance = startFieldWithDistance.distance + 1;
+                        if (altDistance < fields.get(edge.endNode).distance) {
+                            fields.get(edge.endNode).distance = altDistance;
+                            edge.endNode.distanceToFinal = altDistance;
+                        }
+                    }
+                }
+            }
+            // for (let [field, fieldWithDistance] of fields) {
+            //   field.distanceToFinal = fieldWithDistance.distance;
+            // }
+        }
+        static findNodeWithShortestDistance(fields) {
+            let shortestDistance = Number.MAX_VALUE;
+            let fieldWithShortestDistance;
+            for (let [field, fieldWithDistance] of fields) {
+                if (shortestDistance >= fieldWithDistance.distance) {
+                    shortestDistance = fieldWithDistance.distance;
+                    fieldWithShortestDistance = field;
+                }
+            }
+            return fieldWithShortestDistance;
+        }
+        initialize(startNode) {
+            let nodesWithDistance = new Map();
+            for (let [label, field] of this.nodes) {
+                let fieldWithDistance = new FieldWithDistance(field);
+                if (label == startNode) {
+                    fieldWithDistance.distance = 0;
+                }
+                nodesWithDistance.set(field, fieldWithDistance);
+            }
+            return nodesWithDistance;
         }
         static findNodesWithDistanceToNode(_node, _distance, adjacentFields, previousFields = []) {
             _distance--;
@@ -260,6 +308,7 @@ var Malefiz;
             super(_label);
             this.edgesOfNode = [];
             this.token = null;
+            this.reverseEdgesOfNode = [];
             this.addComponent(new ƒ.ComponentMesh(new Malefiz.MeshCircle()));
             this.addComponent(new ƒ.ComponentMaterial(new ƒ.Material("FieldMat", ƒ.ShaderFlat, new ƒ.CoatColored(_color))));
             this.addComponent(new ƒ.ComponentTransform(ƒ.Matrix4x4.TRANSLATION(_position.toVector3())));
@@ -277,6 +326,31 @@ var Malefiz;
         #endNode;
         get endNode() {
             return this.#endNode;
+        }
+    }
+    class FieldWithDistance {
+        constructor(_field) {
+            this.#field = _field;
+            this.#distance = Number.MAX_VALUE;
+            this.#predecessor = null;
+        }
+        #field;
+        #distance;
+        #predecessor;
+        get field() {
+            return this.#field;
+        }
+        get distance() {
+            return this.#distance;
+        }
+        set distance(_distance) {
+            this.#distance = _distance;
+        }
+        get predecessor() {
+            return this.#predecessor;
+        }
+        set predecessor(_predecessor) {
+            this.#predecessor = _predecessor;
         }
     }
 })(Malefiz || (Malefiz = {}));
@@ -642,6 +716,7 @@ var Malefiz;
             this.currentStage = Malefiz.STAGE.ROLL;
             this.executeTurn = (_event) => {
                 let currentPlayer = this.players[this.currentTurn % this.players.length];
+                let switchToNextTurn = false;
                 switch (this.currentStage) {
                     case Malefiz.STAGE.ROLL:
                         if (this.dice.pickDice(_event)) {
@@ -661,9 +736,7 @@ var Malefiz;
                                 this.currentStage = Malefiz.STAGE.SET_BARRIER;
                                 break;
                             case Malefiz.INSTRUCTION.NEXT_TURN:
-                                this.currentStage = Malefiz.STAGE.ROLL;
-                                this.currentTurn++;
-                                this.updateCurrentPlayerDisplay();
+                                switchToNextTurn = true;
                                 break;
                             case Malefiz.INSTRUCTION.PICK_TOKEN:
                                 if (!currentPlayer.pickToken(_event, this.diceValue)) {
@@ -674,17 +747,23 @@ var Malefiz;
                                 alert(currentPlayer.getName() + " won!");
                                 currentPlayer.removeTokens();
                                 this.players.splice(this.currentTurn % this.players.length, 1);
-                                this.currentTurn++;
+                                switchToNextTurn = true;
                                 break;
                         }
                         break;
                     case Malefiz.STAGE.SET_BARRIER:
                         if (currentPlayer.setBarrier()) {
-                            this.currentStage = Malefiz.STAGE.ROLL;
-                            this.currentTurn++;
-                            this.updateCurrentPlayerDisplay();
+                            switchToNextTurn = true;
                         }
                         break;
+                }
+                if (switchToNextTurn) {
+                    this.currentStage = Malefiz.STAGE.ROLL;
+                    this.currentTurn++;
+                    this.updateCurrentPlayerDisplay();
+                    if (this.players[this.currentTurn % this.players.length] instanceof Malefiz.AIPlayer) {
+                        this.emulatePlayer();
+                    }
                 }
                 Malefiz.viewport.draw();
             };
@@ -696,6 +775,12 @@ var Malefiz;
             Malefiz.viewport.addEventListener("\u0192pointerdown" /* DOWN */, this.executeTurn);
             Malefiz.viewport.activatePointerEvent("\u0192pointerdown" /* DOWN */, true);
             Malefiz.viewport.addEventListener("\u0192pointermove" /* MOVE */, this.moveBarrier);
+        }
+        emulatePlayer() {
+            let startTurn = this.currentTurn;
+            while (startTurn === this.currentTurn) {
+                this.executeTurn(null);
+            }
         }
         updateCurrentPlayerDisplay() {
             Malefiz.viewport.getBranch().getChildrenByName("PlayerDisplay")[0].getComponent(ƒ.ComponentMaterial).clrPrimary = this.players[this.currentTurn % this.players.length].getColor();
@@ -719,8 +804,12 @@ var Malefiz;
                 fieldRoot.addChild(field);
                 SceneBuilder.insertEdges(field);
             }
-            Malefiz.viewport.getBranch().addChild(fieldRoot);
             SceneBuilder.insertRemainingEdges();
+            Malefiz.graph.dijkstraFrom("0|8");
+            for (let [label, field] of Malefiz.graph.nodes) {
+                console.log(label + ": " + field.distanceToFinal);
+            }
+            Malefiz.viewport.getBranch().addChild(fieldRoot);
             SceneBuilder.addStandardTokens();
         }
         static addNodes() {

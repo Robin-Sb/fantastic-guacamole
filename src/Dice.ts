@@ -46,6 +46,9 @@ namespace Malefiz {
     }
 
     public pickDice(_event: ƒ.EventPointer): boolean {
+      // roll of event has no mouseclick (and thus no event), but should also roll
+      if (_event === null)
+        return true;
       let dicePicked: boolean = false;
       let picks: ƒ.Pick[] = ƒ.Picker.pickViewport(viewport, new ƒ.Vector2(_event.canvasX, _event.canvasY));
       for (let pick of picks) {

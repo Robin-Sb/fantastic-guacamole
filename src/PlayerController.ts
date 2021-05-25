@@ -19,6 +19,7 @@ namespace Malefiz {
 
     private executeTurn = (_event: ƒ.EventPointer): void => {
       let currentPlayer: Player = this.players[this.currentTurn % this.players.length];
+      let switchToNextTurn: boolean = false;
       switch (this.currentStage) {
         case STAGE.ROLL:
           if (this.dice.pickDice(_event)) {
@@ -38,9 +39,7 @@ namespace Malefiz {
               this.currentStage = STAGE.SET_BARRIER;
               break;
             case INSTRUCTION.NEXT_TURN:
-              this.currentStage = STAGE.ROLL;
-              this.currentTurn++;
-              this.updateCurrentPlayerDisplay();
+              switchToNextTurn = true;
               break;
             case INSTRUCTION.PICK_TOKEN:
               if (!currentPlayer.pickToken(_event, this.diceValue)) {
@@ -51,20 +50,35 @@ namespace Malefiz {
               alert(currentPlayer.getName() + " won!");
               currentPlayer.removeTokens();
               this.players.splice(this.currentTurn % this.players.length, 1);
-              this.currentTurn++;
+              switchToNextTurn = true;
               break;
             }
           break;
 
         case STAGE.SET_BARRIER:
           if (currentPlayer.setBarrier()) {
-            this.currentStage = STAGE.ROLL;
-            this.currentTurn++;
-            this.updateCurrentPlayerDisplay();
+            switchToNextTurn = true;
           }
           break;
       }
+
+      if (switchToNextTurn) {
+        this.currentStage = STAGE.ROLL;
+        this.currentTurn++;
+        this.updateCurrentPlayerDisplay();
+        if (this.players[this.currentTurn % this.players.length] instanceof AIPlayer) {
+          this.emulatePlayer()
+        }
+      }
       viewport.draw();
+    }
+
+    private emulatePlayer(): void {
+      let startTurn = this.currentTurn;
+
+      while(startTurn === this.currentTurn) {
+        this.executeTurn(null);
+      }
     }
 
     private moveBarrier = (_event: ƒ.EventPointer): void => {
